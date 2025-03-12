@@ -14,6 +14,11 @@ private:
 	GLFWwindow* gWindow;
 
 public:
+	Window()
+	{
+		gWindow = NULL;
+	}
+
 	Window(const char* name, int* width, int* height)
 	{
 		gWindow = NULL;
@@ -42,6 +47,13 @@ public:
 		glfwMakeContextCurrent(gWindow);
 
 		this->Initialize();
+	}
+
+	~Window()
+	{
+		glfwDestroyWindow(gWindow);
+		gWindow = NULL;
+		glfwTerminate();
 	}
 
 	bool Initialize()

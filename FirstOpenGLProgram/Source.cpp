@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 
 //OpenGL Includes
@@ -158,3 +159,4 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 }
+*/

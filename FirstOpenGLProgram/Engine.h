@@ -2,7 +2,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include <iostream>
 #include <string>
 
 #include "Window.h"
@@ -22,9 +21,19 @@ private:
 	int m_WINDOW_HEIGHT;
 
 public:
-	Engine(const char* window_name, int window_width, int window_height) : m_WINDOW_NAME(window_name), m_WINDOW_WIDTH(window_width), m_WINDOW_HEIGHT(window_height)
+	Engine(const char* name, int width, int height)
 	{
-		//constructor
+		m_WINDOW_NAME = name;
+		m_WINDOW_WIDTH = width;
+		m_WINDOW_HEIGHT = height;
+	}
+
+	~Engine()
+	{
+		delete m_window;
+		delete m_graphics;
+		m_window = NULL;
+		m_graphics = NULL;
 	}
 
 	bool Initialize()
@@ -33,7 +42,7 @@ public:
 		m_window = new Window(m_WINDOW_NAME, &m_WINDOW_WIDTH, &m_WINDOW_HEIGHT);
 		if (!m_window->Initialize())
 		{
-			printf("The window failed to Initalize!\n");
+			std::cerr << "The window failed to Initalize!" << std::endl;
 			return false;
 		}
 
@@ -41,10 +50,10 @@ public:
 		m_graphics = new Graphics();
 		if (!m_graphics->Initialize(m_WINDOW_WIDTH, m_WINDOW_HEIGHT))
 		{
-			printf("The graphics failed to Initalize!\n");
+			std::cerr << "The graphics failed to Initalize!" << std::endl;
 			return false;
 		}
-
+		
 		return true;
 	}
 
@@ -58,6 +67,7 @@ public:
 			Display(m_window->getWindow(), glfwGetTime());
 			glfwPollEvents();
 		}
+
 		m_running = false;
 	}
 
