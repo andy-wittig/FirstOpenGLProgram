@@ -84,7 +84,7 @@ public:
 
 	void Render()
 	{
-		glClearColor(0.5, 0.2, 0.2, 1.0);
+		glClearColor(0.0, 0.2, 0.5, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		m_shader->Enable();

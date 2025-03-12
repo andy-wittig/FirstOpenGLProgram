@@ -109,10 +109,10 @@ public:
 		glDisableVertexAttribArray(1);
 	}
 
-	void Update(unsigned int delta_time) //Might not be correct
+	void Update(float delta_time)
 	{
-		angle += delta_time * .25 * 3.1415f;;
-		model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, 0));
+		//std::cout << delta_time << std::endl;
+		model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 0.25f, glm::vec3(0, 1.0f, 0));
 	}
 };
 #endif

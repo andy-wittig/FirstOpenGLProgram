@@ -123,7 +123,7 @@ public:
 	GLint GetUniformLocation(const char* uniform_name)
 	{
 		GLuint location = glGetUniformLocation(m_shaderProg, uniform_name);
-		if (location == GL_INVALID_VALUE) //might be GL_INVALID_OPERATION
+		if (location == -1)
 		{
 			std::cerr << "Error: Uniform Location Not Available!\n" << uniform_name << std::endl;
 		}

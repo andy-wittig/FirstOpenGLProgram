@@ -14,7 +14,7 @@ private:
 public:
 	bool Initialize(int w, int h)
 	{
-		view = glm::lookAt( glm::vec3(0.0, 10.0, -16.0), //eye position
+		view = glm::lookAt( glm::vec3(0.0, 5.0, -8.0), //eye position
 							glm::vec3(0.0, 0.0, 0.0), //focus point
 							glm::vec3(0.0, 1.0, 0.0)); //positive y is up
 

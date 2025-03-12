@@ -15,6 +15,7 @@ private:
 
 	bool m_running;
 	bool m_FULLSCREEN;
+	unsigned int last_time;
 	
 	const char* m_WINDOW_NAME;
 	int m_WINDOW_WIDTH;
