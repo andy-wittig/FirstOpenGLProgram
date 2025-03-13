@@ -22,6 +22,8 @@ private:
 	};
 
 	float angle;
+	float rotation_damp = 0.05;
+	float offset_damp = 0.05;
 
 	GLuint VB;
 	GLuint IB;
@@ -109,10 +111,13 @@ public:
 		glDisableVertexAttribArray(1);
 	}
 
-	void Update(float delta_time)
+	void Update(float delta_time, glm::vec3 offset, float angle_offset)
 	{
-		//std::cout << delta_time << std::endl;
-		model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 0.25f, glm::vec3(0, 1.0f, 0));
+		model = glm::translate(glm::mat4(1.0f), offset * offset_damp);
+		model *= glm::rotate(glm::mat4(1.0f), angle_offset * rotation_damp, glm::vec3(0, 1.0f, 0));
+
+		//Spin Model 
+		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
 	}
 };
 #endif

@@ -137,9 +137,9 @@ public:
 		}
 	}
 
-	void Update(unsigned int dt)
+	void Update(unsigned int dt, glm::vec3 pos, float angle)
 	{
-		m_cube->Update(dt);
+		m_cube->Update(dt, pos, angle);
 	}
 };
 #endif

@@ -3,6 +3,7 @@
 #define ENGINE_H
 
 #include <string>
+#include <vector>
 
 #include "Window.h"
 #include "Graphics.h"
@@ -13,13 +14,15 @@ private:
 	Graphics* m_graphics;
 	Window* m_window;
 
-	bool m_running;
-	bool m_FULLSCREEN;
-	unsigned int last_time;
-	
 	const char* m_WINDOW_NAME;
 	int m_WINDOW_WIDTH;
 	int m_WINDOW_HEIGHT;
+
+	bool m_running;
+	bool m_FULLSCREEN;
+
+	glm::vec3 position;
+	float rotation;
 
 public:
 	Engine(const char* name, int width, int height)
@@ -72,21 +75,52 @@ public:
 		m_running = false;
 	}
 
+	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+
+	}
+
 	void ProcessInput()
 	{
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(m_window->getWindow(), true);
 		}
+
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_UP) == GLFW_PRESS)
+		{
+			position.y++;
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
+		{
+			position.y--;
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT) == GLFW_PRESS)
+		{
+			position.x++;
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_RIGHT) == GLFW_PRESS)
+		{
+			position.x--;
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_P) == GLFW_PRESS)
+		{
+			rotation--;
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_O) == GLFW_PRESS)
+		{
+			rotation++;
+		}
 	}
+
 
 	void Display(GLFWwindow* window, double time)
 	{
 		m_graphics->Render();
 		m_window->Swap();
-		m_graphics->Update(time);
+		std::cout << position.x << std::endl;
+		m_graphics->Update(time, position, rotation);
 	}
-
 };
 
 #endif
