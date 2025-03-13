@@ -137,6 +137,11 @@ public:
 		}
 	}
 
+	void UpdateMousePos(int x, int y)
+	{
+		m_camera->MouseLook(x, y);
+	}
+
 	void Update(unsigned int dt, glm::vec3 pos, float angle)
 	{
 		m_cube->Update(dt, pos, angle);

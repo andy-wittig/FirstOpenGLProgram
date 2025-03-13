@@ -75,18 +75,20 @@ public:
 		m_running = false;
 	}
 
-	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-	{
-
-	}
-
 	void ProcessInput()
 	{
+		//Mouse Position
+		double x_pos, y_pos;
+		glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
+		m_graphics->UpdateMousePos(x_pos, y_pos);
+
+		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(m_window->getWindow(), true);
 		}
 
+		//Translate and Rotate Object
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_UP) == GLFW_PRESS)
 		{
 			position.y++;
@@ -118,7 +120,6 @@ public:
 	{
 		m_graphics->Render();
 		m_window->Swap();
-		std::cout << position.x << std::endl;
 		m_graphics->Update(time, position, rotation);
 	}
 };
