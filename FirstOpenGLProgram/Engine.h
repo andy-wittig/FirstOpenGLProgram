@@ -68,6 +68,7 @@ public:
 		while (!glfwWindowShouldClose(m_window->getWindow()))
 		{
 			ProcessInput();
+			UpdateMousePosition();
 			Display(m_window->getWindow(), glfwGetTime());
 			glfwPollEvents();
 		}
@@ -75,12 +76,17 @@ public:
 		m_running = false;
 	}
 
-	void ProcessInput()
+	void UpdateMousePosition()
 	{
-		//Mouse Position
 		double x_pos, y_pos;
 		glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
 		m_graphics->UpdateMousePos(x_pos, y_pos);
+	}
+
+	void ProcessInput()
+	{
+		//Mouse Position
+		
 
 		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)

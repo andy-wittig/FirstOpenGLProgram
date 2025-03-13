@@ -137,7 +137,7 @@ public:
 		}
 	}
 
-	void UpdateMousePos(int x, int y)
+	void UpdateMousePos(double x, double y)
 	{
 		m_camera->MouseLook(x, y);
 	}

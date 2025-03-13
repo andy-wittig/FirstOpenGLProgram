@@ -5,25 +5,35 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
+#include<glm/gtx/vector_angle.hpp>
 
 class Camera
 {
 private:
+	int screen_width;
+	int screen_height;
+
 	glm::mat4 projection;
 	glm::mat4 view;
 
 	glm::vec3 eye_pos = glm::vec3(0.0, 5.0, -8.0);
-	glm::vec3 focus_pos = glm::vec3(0.0, 0.0, 0.0);
+	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
+	glm::vec3 direction;
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
-	glm::vec2 prev_mouse_pos;
+	float sensitivity = 0.2;
 
 public:
 	bool Initialize(int w, int h)
 	{
-		view = glm::lookAt(eye_pos, focus_pos, up_dir);
+		screen_width = w;
+		screen_height = h;
 
+		direction = glm::normalize(orientation - eye_pos);
+		view = glm::lookAt(eye_pos, eye_pos + direction, up_dir);
+		
 		projection = glm::perspective(  glm::radians(45.f), //90 degree FOV
 										float(w) / float(h), //aspect ratio
 										0.01f, //distance to near plane
@@ -31,11 +41,16 @@ public:
 		return true;
 	}
 
-	void MouseLook(int mouse_x, int mouse_y)
+	void MouseLook(double mouse_x, double mouse_y)
 	{
-		std::cout << "X: " << mouse_x << ", Y: " << mouse_y << std::endl;
-		focus_pos = glm::rotate(focus_pos, glm::radians(mouse_x), up_dir);
-		view = glm::lookAt(eye_pos, focus_pos, up_dir);
+		//std::cout << "X: " << mouse_x << ", Y: " << mouse_y << std::endl;
+
+		float mx = mouse_x;
+		float my = mouse_y;
+
+		direction = glm::normalize(orientation - eye_pos);
+		direction = glm::rotate(direction, glm::radians(mx), up_dir);
+		direction = glm::rotate(direction, glm::radians(my), glm::vec3(1.0, 0.0, 0.0));
 	}
 
 	glm::mat4 GetProjection()
@@ -45,6 +60,8 @@ public:
 
 	glm::mat4 GetView()
 	{
+		
+		view = glm::lookAt(eye_pos, eye_pos + direction, up_dir);
 		return view;
 	}
 
