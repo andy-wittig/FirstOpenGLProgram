@@ -10,6 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <iostream>
+#include <fstream>
+
 class Graphics
 {
 private:
@@ -50,8 +53,8 @@ public:
 			return false;
 		}
 
-		m_floor = new Object();
-		m_cube = new Object();
+		m_floor = new Object("cube.txt");
+		m_cube = new Object("cube.txt");
 
 		m_shader = new Shader();
 		if (!m_shader->Initialize())

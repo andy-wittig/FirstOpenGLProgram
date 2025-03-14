@@ -37,9 +37,9 @@ private:
 	std::vector<Vertex> Vertices;
 
 public:
-	Object()
-	{
-		std::ifstream object_file("cube.txt");
+	Object(std::string object_file_path)
+	{ 
+		std::ifstream object_file(object_file_path);
 
 		if (object_file.is_open())
 		{
