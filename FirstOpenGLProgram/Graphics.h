@@ -2,6 +2,9 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <iostream>
+#include <fstream>
+
 #include "Camera.h"
 #include "Object.h"
 #include "Shader.h"
@@ -9,6 +12,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+std::ifstream cube_file("cube.txt");
 
 class Graphics
 {
@@ -28,10 +33,13 @@ private:
 		"void main() { frag_color = vec4(color.rgb, 1.0); }";
 
 	Camera* m_camera;
+	Shader* m_shader;
+
+	Object* m_floor;
 	Object* m_cube;
+
 	GLint m_modelMatrix;
 	GLint m_projectionMatrix;
-	Shader* m_shader;
 	GLint m_viewMatrix;
 public:
 	bool Initialize(int width, int height)
@@ -47,7 +55,8 @@ public:
 			return false;
 		}
 
-		m_cube = new Object();
+		m_floor = new Object(cube_file);
+		m_cube = new Object(cube_file);
 
 		m_shader = new Shader();
 		if (!m_shader->Initialize())
@@ -93,7 +102,10 @@ public:
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		
-		//Render Object
+		//Render Objects
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
+		m_floor->Render();
+
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
 

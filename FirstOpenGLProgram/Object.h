@@ -3,6 +3,8 @@
 #define OBJECT_H
 
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -34,33 +36,40 @@ private:
 	std::vector<Vertex> Vertices;
 
 public:
-	Object()
+	Object(std::ifstream& object_file)
 	{
-		Vertices = {
-			{{1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
-			{{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-			{{-1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-			{{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
-			{{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 0.0f}},
-			{{1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
-			{{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-			{{-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f}},
-		};
+		if (object_file.is_open())
+		{
+			std::string line;
 
-		Indices = {
-			2, 3, 4,
-			8, 7, 6,
-			1, 5, 6,
-			2, 6, 7,
-			7, 8, 4,
-			1, 4, 8,
-			1, 2, 4,
-			5, 8, 6,
-			2, 1, 6,
-			3, 2, 7,
-			3, 7, 4,
-			5, 1, 8
-		};
+			while (getline(object_file, line))
+			{
+				std::stringstream sstream(line);
+				std::string type;
+				sstream >> type;
+
+				if (type == "V")
+				{
+					Vertex m_vertex;
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z
+						>> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z;
+					Vertices.push_back(m_vertex);
+				}
+				else if (type == "I")
+				{
+					std::string index;
+					while (getline(sstream, index, ' '))
+					{
+						Indices.push_back((unsigned int)std::stoi(index));
+					}
+				}	
+			}
+			object_file.close();
+		}
+		else
+		{
+			std::cerr << "Error: Could not Open File!\n" << std::endl;
+		}
 
 		for (unsigned int i = 0; i < Indices.size(); i++)
 		{

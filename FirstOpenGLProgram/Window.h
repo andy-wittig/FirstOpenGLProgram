@@ -36,7 +36,9 @@ public:
 		//Create Window
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-		gWindow = glfwCreateWindow(*width, *height, name, NULL, NULL);
+
+		gWindow = glfwCreateWindow(glfwGetVideoMode(glfwGetPrimaryMonitor())->width, glfwGetVideoMode(glfwGetPrimaryMonitor())->height, name, glfwGetPrimaryMonitor(), NULL);
+		//gWindow = glfwCreateWindow(*width, *height, name, NULL, NULL);
 
 		if (!gWindow) //Window Failed
 		{
@@ -67,6 +69,15 @@ public:
 		glfwSwapInterval(1);
 
 		return true;
+	}
+
+	int getWindowWidth()
+	{
+		return glfwGetVideoMode(glfwGetPrimaryMonitor())->width;
+	}
+	int getWindowHeight()
+	{
+		return glfwGetVideoMode(glfwGetPrimaryMonitor())->height;
 	}
 
 	GLFWwindow* getWindow()

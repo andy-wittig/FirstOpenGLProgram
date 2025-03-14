@@ -23,7 +23,7 @@ private:
 	glm::vec3 direction;
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
-	float sensitivity = 0.2;
+	float mouse_sensitivity = 85.0f;
 
 public:
 	bool Initialize(int w, int h)
@@ -45,12 +45,17 @@ public:
 	{
 		//std::cout << "X: " << mouse_x << ", Y: " << mouse_y << std::endl;
 
-		float mx = mouse_x;
-		float my = mouse_y;
+		float rot_x = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
+		float rot_y = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
 
-		direction = glm::normalize(orientation - eye_pos);
-		direction = glm::rotate(direction, glm::radians(mx), up_dir);
-		direction = glm::rotate(direction, glm::radians(my), glm::vec3(1.0, 0.0, 0.0));
+		glm::vec3 new_direction = glm::rotate(direction, glm::radians(-rot_x), glm::normalize(glm::cross(direction, up_dir)));
+
+		if (abs(glm::angle(new_direction, up_dir) - glm::radians(90.0f)) <= glm::radians(85.0f))
+		{
+			direction = new_direction;
+		}
+
+		direction = glm::rotate(direction, glm::radians(-rot_y), up_dir);
 	}
 
 	glm::mat4 GetProjection()

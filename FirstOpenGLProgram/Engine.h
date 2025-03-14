@@ -52,7 +52,7 @@ public:
 
 		//Start Graphics
 		m_graphics = new Graphics();
-		if (!m_graphics->Initialize(m_WINDOW_WIDTH, m_WINDOW_HEIGHT))
+		if (!m_graphics->Initialize(m_window->getWindowWidth(), m_window->getWindowHeight()))
 		{
 			std::cerr << "The graphics failed to Initalize!" << std::endl;
 			return false;
@@ -68,7 +68,6 @@ public:
 		while (!glfwWindowShouldClose(m_window->getWindow()))
 		{
 			ProcessInput();
-			UpdateMousePosition();
 			Display(m_window->getWindow(), glfwGetTime());
 			glfwPollEvents();
 		}
@@ -79,14 +78,33 @@ public:
 	void UpdateMousePosition()
 	{
 		double x_pos, y_pos;
+
 		glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
+		glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
+		glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 		m_graphics->UpdateMousePos(x_pos, y_pos);
+		
 	}
 
 	void ProcessInput()
 	{
-		//Mouse Position
-		
+		//Mouse Controlled Camera
+		if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		{
+			UpdateMousePosition();
+		}
+		else if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+		{
+			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+
+
+		//Fullscreen
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(m_window->getWindow(), true);
+		}
 
 		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
