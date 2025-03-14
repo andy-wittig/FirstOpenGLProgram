@@ -17,6 +17,7 @@
 class Object
 {
 private:
+
 	struct Vertex
 	{
 		glm::vec3 color;
@@ -36,8 +37,10 @@ private:
 	std::vector<Vertex> Vertices;
 
 public:
-	Object(std::ifstream& object_file)
+	Object()
 	{
+		std::ifstream object_file("cube.txt");
+
 		if (object_file.is_open())
 		{
 			std::string line;
@@ -51,14 +54,13 @@ public:
 				if (type == "V")
 				{
 					Vertex m_vertex;
-					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z
-						>> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z;
+					sstream >> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z;
 					Vertices.push_back(m_vertex);
 				}
 				else if (type == "I")
 				{
 					std::string index;
-					while (getline(sstream, index, ' '))
+					while (sstream >> index)
 					{
 						Indices.push_back((unsigned int)std::stoi(index));
 					}

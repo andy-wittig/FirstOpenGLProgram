@@ -2,9 +2,6 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <iostream>
-#include <fstream>
-
 #include "Camera.h"
 #include "Object.h"
 #include "Shader.h"
@@ -12,8 +9,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-std::ifstream cube_file("cube.txt");
 
 class Graphics
 {
@@ -55,8 +50,8 @@ public:
 			return false;
 		}
 
-		m_floor = new Object(cube_file);
-		m_cube = new Object(cube_file);
+		m_floor = new Object();
+		m_cube = new Object();
 
 		m_shader = new Shader();
 		if (!m_shader->Initialize())
