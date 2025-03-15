@@ -38,7 +38,6 @@ public:
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 		gWindow = glfwCreateWindow(glfwGetVideoMode(glfwGetPrimaryMonitor())->width, glfwGetVideoMode(glfwGetPrimaryMonitor())->height, name, glfwGetPrimaryMonitor(), NULL);
-		//gWindow = glfwCreateWindow(*width, *height, name, NULL, NULL);
 
 		if (!gWindow) //Window Failed
 		{

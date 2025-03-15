@@ -55,13 +55,6 @@ public:
 
 		//Start Graphics
 		m_graphics = new Graphics();
-		/*
-		if (!m_graphics->Initialize(m_WINDOW_WIDTH, m_WINDOW_HEIGHT))
-		{
-			std::cerr << "The graphics failed to Initalize!" << std::endl;
-			return false;
-		}
-		*/
 		if (!m_graphics->Initialize(m_window->getWindowWidth(), m_window->getWindowHeight()))
 		{
 			std::cerr << "The graphics failed to Initalize!" << std::endl;
