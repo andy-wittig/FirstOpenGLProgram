@@ -21,6 +21,9 @@ private:
 	bool m_running;
 	bool m_FULLSCREEN;
 
+	float delta_time = 0.0f;
+	float last_frame = 0.0f;
+
 	glm::vec3 position;
 	float rotation;
 
@@ -72,34 +75,32 @@ public:
 	{
 		m_running = true;
 
+		float current_frame = glfwGetTime();
+		delta_time = current_frame - last_frame;
+		last_frame = current_frame;
+
 		while (!glfwWindowShouldClose(m_window->getWindow()))
 		{
 			ProcessInput();
-			Display(m_window->getWindow(), glfwGetTime());
+			Display(m_window->getWindow(), delta_time);
 			glfwPollEvents();
 		}
 
 		m_running = false;
 	}
 
-	void UpdateMousePosition()
-	{
-		double x_pos, y_pos;
-
-		glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
-		glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
-		glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
-		m_graphics->UpdateMousePos(x_pos, y_pos);
-		
-	}
-
 	void ProcessInput()
 	{
-		//User Control Camera
+		//User Controlled Camera
 		if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 		{
-			UpdateMousePosition();
+			double x_pos, y_pos;
+
+			glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
+			glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
+			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+			m_graphics->UpdateMousePos(x_pos, y_pos);
 		}
 		else if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 		{

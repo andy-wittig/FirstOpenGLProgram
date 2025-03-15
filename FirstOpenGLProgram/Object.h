@@ -20,8 +20,8 @@ private:
 
 	struct Vertex
 	{
-		glm::vec3 color;
 		glm::vec3 vertex;
+		glm::vec3 color;
 	};
 
 	float angle;
@@ -54,7 +54,7 @@ public:
 				if (type == "V")
 				{
 					Vertex m_vertex;
-					sstream >> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z;
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z >> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z;
 					Vertices.push_back(m_vertex);
 				}
 				else if (type == "I")
@@ -114,7 +114,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
-		glBindBuffer(GL_ARRAY_BUFFER, IB);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 

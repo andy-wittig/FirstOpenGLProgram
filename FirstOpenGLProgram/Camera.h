@@ -22,8 +22,9 @@ private:
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
+	const float CAMERA_SPEED = 1.0f;
+	float camera_speed;
 	float mouse_sensitivity = 85.0f;
-	float move_speed = 0.2f;
 
 public:
 	bool Initialize(int w, int h)
@@ -32,8 +33,7 @@ public:
 		screen_height = h;
 
 		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
-		
-		projection = glm::perspective(  glm::radians(45.f), //90 degree FOV
+		projection = glm::perspective(  glm::radians(60.f), //Field of View
 										float(w) / float(h), //aspect ratio
 										0.01f, //distance to near plane
 										100.0f); //distance to far plane
@@ -57,21 +57,26 @@ public:
 		orientation = glm::rotate(orientation, glm::radians(-rot_y), up_dir);
 	}
 
+	void UpdateTime(float dt)
+	{
+		camera_speed = CAMERA_SPEED * dt;
+	}
+
 	void MoveForward()
 	{
-		camera_pos += move_speed * orientation;
+		camera_pos += camera_speed * orientation;
 	}
 	void MoveBackward()
 	{
-		camera_pos -= move_speed * orientation;
+		camera_pos -= camera_speed * orientation;
 	}
 	void MoveLeft()
 	{
-		camera_pos -= glm::normalize(glm::cross(orientation, up_dir)) * move_speed;
+		camera_pos -= glm::normalize(glm::cross(orientation, up_dir)) * camera_speed;
 	}
 	void MoveRight()
 	{
-		camera_pos += glm::normalize(glm::cross(orientation, up_dir)) * move_speed;
+		camera_pos += glm::normalize(glm::cross(orientation, up_dir)) * camera_speed;
 	}
 
 	glm::mat4 GetProjection()

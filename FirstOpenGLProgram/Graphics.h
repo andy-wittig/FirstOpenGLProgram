@@ -53,7 +53,7 @@ public:
 			return false;
 		}
 
-		//m_floor = new Object("floor.txt");
+		m_floor = new Object("floor.txt");
 		m_cube = new Object("cube.txt");
 
 		m_shader = new Shader();
@@ -91,7 +91,7 @@ public:
 
 	void Render()
 	{
-		glClearColor(0.0, 0.2, 0.5, 1.0); //background color
+		glClearColor(0.38, 0.64, 0.47, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		m_shader->Enable();
@@ -101,8 +101,8 @@ public:
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		
 		//Render Objects
-		//glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
-		//m_floor->Render();
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
+		m_floor->Render();
 
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
@@ -156,8 +156,9 @@ public:
 	void MoveCameraLeft() { m_camera->MoveLeft(); }
 	void MoveCameraRight() { m_camera->MoveRight(); }
 
-	void Update(unsigned int dt, glm::vec3 pos, float angle)
+	void Update(float dt, glm::vec3 pos, float angle)
 	{
+		m_camera->UpdateTime(dt);
 		m_cube->Update(dt, pos, angle);
 	}
 };
