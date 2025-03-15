@@ -96,7 +96,7 @@ public:
 
 	void ProcessInput()
 	{
-		//Mouse Controlled Camera
+		//User Control Camera
 		if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 		{
 			UpdateMousePosition();
@@ -106,12 +106,10 @@ public:
 			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		}
 
-
-		//Fullscreen
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		{
-			glfwSetWindowShouldClose(m_window->getWindow(), true);
-		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) { m_graphics->MoveCameraForward(); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_S) == GLFW_PRESS) { m_graphics->MoveCameraBackward(); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) { m_graphics->MoveCameraLeft(); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) { m_graphics->MoveCameraRight(); }
 
 		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)

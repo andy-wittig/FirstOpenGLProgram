@@ -18,12 +18,12 @@ private:
 	glm::mat4 projection;
 	glm::mat4 view;
 
-	glm::vec3 eye_pos = glm::vec3(0.0, 5.0, -8.0);
+	glm::vec3 camera_pos = glm::vec3(0.0, 0.0, -8.0);
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
-	glm::vec3 direction;
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
 	float mouse_sensitivity = 85.0f;
+	float move_speed = 0.2f;
 
 public:
 	bool Initialize(int w, int h)
@@ -31,8 +31,7 @@ public:
 		screen_width = w;
 		screen_height = h;
 
-		direction = glm::normalize(orientation - eye_pos);
-		view = glm::lookAt(eye_pos, eye_pos + direction, up_dir);
+		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
 		
 		projection = glm::perspective(  glm::radians(45.f), //90 degree FOV
 										float(w) / float(h), //aspect ratio
@@ -48,14 +47,31 @@ public:
 		float rot_x = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
 		float rot_y = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
 
-		glm::vec3 new_direction = glm::rotate(direction, glm::radians(-rot_x), glm::normalize(glm::cross(direction, up_dir)));
+		glm::vec3 new_orientation = glm::rotate(orientation, glm::radians(-rot_x), glm::normalize(glm::cross(orientation, up_dir)));
 
-		if (abs(glm::angle(new_direction, up_dir) - glm::radians(90.0f)) <= glm::radians(85.0f))
+		if (abs(glm::angle(new_orientation, up_dir) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
-			direction = new_direction;
+			orientation = new_orientation;
 		}
 
-		direction = glm::rotate(direction, glm::radians(-rot_y), up_dir);
+		orientation = glm::rotate(orientation, glm::radians(-rot_y), up_dir);
+	}
+
+	void MoveForward()
+	{
+		camera_pos += move_speed * orientation;
+	}
+	void MoveBackward()
+	{
+		camera_pos -= move_speed * orientation;
+	}
+	void MoveLeft()
+	{
+		camera_pos -= glm::normalize(glm::cross(orientation, up_dir)) * move_speed;
+	}
+	void MoveRight()
+	{
+		camera_pos += glm::normalize(glm::cross(orientation, up_dir)) * move_speed;
 	}
 
 	glm::mat4 GetProjection()
@@ -66,7 +82,7 @@ public:
 	glm::mat4 GetView()
 	{
 		
-		view = glm::lookAt(eye_pos, eye_pos + direction, up_dir);
+		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
 		return view;
 	}
 

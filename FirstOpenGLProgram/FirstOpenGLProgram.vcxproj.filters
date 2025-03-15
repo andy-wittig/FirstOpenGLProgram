@@ -43,5 +43,8 @@
     <Text Include="cube.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="floor.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

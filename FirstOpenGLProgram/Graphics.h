@@ -53,7 +53,7 @@ public:
 			return false;
 		}
 
-		m_floor = new Object("cube.txt");
+		//m_floor = new Object("floor.txt");
 		m_cube = new Object("cube.txt");
 
 		m_shader = new Shader();
@@ -101,8 +101,8 @@ public:
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		
 		//Render Objects
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
-		m_floor->Render();
+		//glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
+		//m_floor->Render();
 
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
@@ -151,6 +151,10 @@ public:
 	{
 		m_camera->MouseLook(x, y);
 	}
+	void MoveCameraForward() { m_camera->MoveForward(); }
+	void MoveCameraBackward() { m_camera->MoveBackward(); }
+	void MoveCameraLeft() { m_camera->MoveLeft(); }
+	void MoveCameraRight() { m_camera->MoveRight(); }
 
 	void Update(unsigned int dt, glm::vec3 pos, float angle)
 	{
