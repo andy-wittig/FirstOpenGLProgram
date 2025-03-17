@@ -40,7 +40,7 @@ private:
 	std::vector<Vertex> Vertices;
 
 	Texture* m_texture;
-	const char* texture_path;;
+	const char* texture_path;
 
 public:
 	Object(std::string object_file_path, const char* texture_file_path = "undefined_texture.png")
@@ -99,12 +99,15 @@ public:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
 
 		//Compute Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-3.f, 2.f, -3.f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.f));
 		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
 
-		//Create Texture Object
+		//Load Texture
 		m_texture = new Texture();
-		texture_path = texture_file_path;
+		if (!m_texture->loadTexture(texture_file_path))
+		{
+			std::cerr << "Error: Texture Failed to Load!" << std::endl;
+		}
 	}
 
 	~Object()
@@ -130,10 +133,7 @@ public:
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
-		if (!m_texture->loadTexture(texture_path))
-		{
-			std::cerr << "Error: Texture Failed to Load!" << std::endl;
-		}
+		m_texture->bindTexture();
 
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 

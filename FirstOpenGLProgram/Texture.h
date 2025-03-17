@@ -32,6 +32,8 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+		stbi_set_flip_vertically_on_load(true);
+
 		//Load Texture
 		unsigned char* data = stbi_load(texture_path, &width, &height, &nr_color_channels, 0);
 		if (data)
@@ -45,6 +47,11 @@ public:
 		}
 		stbi_image_free(data);
 		return true;
+	}
+
+	void bindTexture()
+	{
+		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 
 	unsigned int getTexture()

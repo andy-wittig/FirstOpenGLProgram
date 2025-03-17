@@ -32,7 +32,7 @@ private:
 		"smooth in vec3 color;\n"
 		"in vec2 tex_coords;\n"
 		"uniform sampler2D Texture;"
-		"void main() { frag_color = texture(Texture, tex_coords); }";
+		"void main() { frag_color = texture(Texture, tex_coords) * vec4(color, 1.0); }";
 
 	Camera* m_camera;
 	Shader* m_shader;
@@ -58,7 +58,7 @@ public:
 		}
 
 		m_quad = new Object("quad.txt", "wood_floor.jpg");
-		m_cube = new Object("cube.txt");
+		m_cube = new Object("cube.txt", "crate.jpg");
 
 		m_shader = new Shader();
 		if (!m_shader->Initialize())
