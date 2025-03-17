@@ -14,6 +14,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "texture.h"
+
 class Object
 {
 private:
@@ -22,6 +24,7 @@ private:
 	{
 		glm::vec3 vertex;
 		glm::vec3 color;
+		glm::vec2 texture_coords;
 	};
 
 	float angle;
@@ -36,8 +39,11 @@ private:
 	std::vector<unsigned int> Indices;
 	std::vector<Vertex> Vertices;
 
+	Texture* m_texture;
+	const char* texture_path;;
+
 public:
-	Object(std::string object_file_path)
+	Object(std::string object_file_path, const char* texture_file_path = "undefined_texture.png")
 	{ 
 		std::ifstream object_file(object_file_path);
 
@@ -54,7 +60,9 @@ public:
 				if (type == "V")
 				{
 					Vertex m_vertex;
-					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z >> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z;
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z 
+						>> m_vertex.color.x >> m_vertex.color.y >> m_vertex.color.z
+						>> m_vertex.texture_coords.x >> m_vertex.texture_coords.y;
 					Vertices.push_back(m_vertex);
 				}
 				else if (type == "I")
@@ -93,6 +101,10 @@ public:
 		//Compute Model Matrix
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(-3.f, 2.f, -3.f));
 		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
+
+		//Create Texture Object
+		m_texture = new Texture();
+		texture_path = texture_file_path;
 	}
 
 	~Object()
@@ -110,16 +122,24 @@ public:
 	{
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
+
+		if (!m_texture->loadTexture(texture_path))
+		{
+			std::cerr << "Error: Texture Failed to Load!" << std::endl;
+		}
 
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 	}
 
 	void Update(float delta_time, glm::vec3 offset, float angle_offset)

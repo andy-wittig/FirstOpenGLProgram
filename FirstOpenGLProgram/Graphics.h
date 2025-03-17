@@ -19,21 +19,25 @@ private:
 	const char* v_shader_source = "#version 460 core\n"
 		"layout (location = 0) in vec3 v_position;\n"
 		"layout (location = 1) in vec3 v_color;\n"
+		"layout (location = 2) in vec2 v_tex_coords;\n"
 		"smooth out vec3 color;\n"
+		"out vec2 tex_coords;\n"
 		"uniform mat4 projectionMatrix;\n"
 		"uniform mat4 viewMatrix;\n"
 		"uniform mat4 modelMatrix;\n"
-		"void main() { vec4 v = vec4(v_position, 1.0);\n gl_Position = (projectionMatrix * viewMatrix * modelMatrix) * v;\n color = v_color; }";
+		"void main() { vec4 v = vec4(v_position, 1.0);\n gl_Position = (projectionMatrix * viewMatrix * modelMatrix) * v;\n color = v_color;\n tex_coords = v_tex_coords; }";
 	
 	const char* f_shader_source = "#version 460 core\n"
-		"smooth in vec3 color;\n"
 		"out vec4 frag_color;\n"
-		"void main() { frag_color = vec4(color.rgb, 1.0); }";
+		"smooth in vec3 color;\n"
+		"in vec2 tex_coords;\n"
+		"uniform sampler2D Texture;"
+		"void main() { frag_color = texture(Texture, tex_coords); }";
 
 	Camera* m_camera;
 	Shader* m_shader;
 
-	Object* m_floor;
+	Object* m_quad;
 	Object* m_cube;
 
 	GLint m_modelMatrix;
@@ -53,7 +57,7 @@ public:
 			return false;
 		}
 
-		m_floor = new Object("floor.txt");
+		m_quad = new Object("quad.txt", "wood_floor.jpg");
 		m_cube = new Object("cube.txt");
 
 		m_shader = new Shader();
@@ -101,8 +105,8 @@ public:
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		
 		//Render Objects
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_floor->GetModel()));
-		m_floor->Render();
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
+		m_quad->Render();
 
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
