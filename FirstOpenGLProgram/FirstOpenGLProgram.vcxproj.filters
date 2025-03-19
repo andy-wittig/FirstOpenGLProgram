@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{ba37d2a0-bff7-43b0-9275-d4a73025d3ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\models">
+      <UniqueIdentifier>{3566575a-8999-4745-ab17-8f9f9d75a56d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -49,26 +55,26 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="cube.txt">
-      <Filter>Source Files</Filter>
-    </Text>
-    <Text Include="quad.txt">
-      <Filter>Source Files</Filter>
-    </Text>
-    <Text Include="light_cube.txt">
-      <Filter>Source Files</Filter>
-    </Text>
     <Text Include="v_shader_source.txt">
-      <Filter>Source Files</Filter>
-    </Text>
-    <Text Include="f_shader_source.txt">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="v_light_shader_source.txt">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="f_shader_source.txt">
+      <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="f_light_shader_source.txt">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="quad.txt">
+      <Filter>Source Files\models</Filter>
+    </Text>
+    <Text Include="light_cube.txt">
+      <Filter>Source Files\models</Filter>
+    </Text>
+    <Text Include="cube.txt">
+      <Filter>Source Files\models</Filter>
     </Text>
   </ItemGroup>
 </Project>
