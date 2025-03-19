@@ -212,9 +212,10 @@ public:
 	void MoveCameraLeft() { m_camera->MoveLeft(); }
 	void MoveCameraRight() { m_camera->MoveRight(); }
 
-	void Update(float dt, glm::vec3 pos, float angle)
+	void Update(float dt, glm::vec3 pos, float angle, float fov)
 	{
 		m_camera->UpdateTime(dt);
+		m_camera->setFOV(fov);
 		m_cube->Update(dt, pos, angle);
 	}
 };

@@ -90,6 +90,11 @@ public:
 		return view;
 	}
 
+	void setFOV(float fov_amount)
+	{
+		projection = glm::perspective(glm::radians(fov_amount), (float)screen_width / (float)screen_height, 0.01f, 100.0f);
+	}
+
 };
 
 #endif

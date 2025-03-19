@@ -6,6 +6,10 @@
 #include "Window.h"
 #include "Graphics.h"
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+const float MAX_FOV = 60.0f;
+float fov = MAX_FOV;
+
 class Engine 
 {
 private:
@@ -61,6 +65,8 @@ public:
 			std::cerr << "The graphics failed to Initalize!" << std::endl;
 			return false;
 		}
+
+		glfwSetScrollCallback(m_window->getWindow(), scroll_callback);
 		
 		return true;
 	}
@@ -81,6 +87,13 @@ public:
 		}
 
 		m_running = false;
+	}
+
+	void Display(GLFWwindow* window, double time)
+	{
+		m_graphics->Render();
+		m_window->Swap();
+		m_graphics->Update(time, position, rotation, fov);
 	}
 
 	void ProcessInput()
@@ -145,14 +158,21 @@ public:
 			rotation++;
 		}
 	}
-
-
-	void Display(GLFWwindow* window, double time)
-	{
-		m_graphics->Render();
-		m_window->Swap();
-		m_graphics->Update(time, position, rotation);
-	}
 };
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	fov -= (float)yoffset;
+
+	//Clamp FOV
+	if (fov < 1.0f)
+	{
+		fov = 1.0f;
+	}
+	if (fov > MAX_FOV)
+	{
+		fov = MAX_FOV;
+	}
+}
 
 #endif
