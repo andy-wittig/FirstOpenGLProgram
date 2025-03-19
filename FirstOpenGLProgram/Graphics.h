@@ -50,7 +50,12 @@ private: //TODO autoload in shaders
 		"vec3 light_dir = normalize(light_pos - frag_pos);\n"
 		"float diff = max(dot(norm, light_dir), 0.0);\n"
 		"vec3 diffuse = diff * light_color;\n"
-		"vec3 result = (ambient + diffuse) * object_color;\n"
+		"float specular_strength = 0.5;\n"
+		"vec3 view_dir = normalize(view_pos - frag_pos);\n"
+		"vec3 reflect_dir = reflect(-light_dir, norm);\n"
+		"float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
+		"vec3 specular = specular_strength * spec * light_color;\n"
+		"vec3 result = (ambient + diffuse + specular) * object_color;\n"
 		"frag_color = texture(Texture, tex_coords) * vec4(result, 1.0); }";
 
 	const char* v_light_shader_source = "#version 460 core\n"
@@ -179,6 +184,7 @@ public:
 		glUniform3fv(m_shader->GetUniformLocation("object_color"), 1, glm::value_ptr(glm::vec3(1.f, 0.5f, 0.31f)));
 		glUniform3fv(m_shader->GetUniformLocation("light_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
 		glUniform3fv(m_shader->GetUniformLocation("light_pos"), 1, glm::value_ptr(glm::vec3(4.f, 4.f, 4.f)));
+		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
 		m_quad->Render();

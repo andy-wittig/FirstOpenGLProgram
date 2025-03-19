@@ -79,6 +79,11 @@ public:
 		camera_pos += glm::normalize(glm::cross(orientation, up_dir)) * camera_speed;
 	}
 
+	glm::vec3 getPosition()
+	{
+		return camera_pos;
+	}
+
 	glm::mat4 GetProjection()
 	{
 		return projection;
