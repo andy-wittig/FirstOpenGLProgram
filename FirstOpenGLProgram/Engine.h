@@ -2,9 +2,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include <string>
-#include <vector>
-
+#include "Main_Header.h"
 #include "Window.h"
 #include "Graphics.h"
 

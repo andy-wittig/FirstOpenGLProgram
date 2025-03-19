@@ -44,6 +44,9 @@
     <ClInclude Include="Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Main_Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="cube.txt">

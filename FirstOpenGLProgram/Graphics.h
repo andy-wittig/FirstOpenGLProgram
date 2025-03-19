@@ -2,17 +2,11 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include "Main_Header.h"
 #include "Camera.h"
 #include "Object.h"
 #include "Light.h"
 #include "Shader.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <iostream>
-#include <fstream>
 
 std::string processShaderFile(const std::string& shader_file_name)
 {
@@ -74,6 +68,7 @@ public:
 		m_cube = new Object("cube.txt", "crate.jpg");
 
 		m_light = new Light("light_cube.txt");
+		m_light->setPosition(glm::vec3(5.f, 5.f, 5.f));
 
 		m_shader = new Shader();
 		m_light_shader = new Shader();
@@ -147,9 +142,9 @@ public:
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		
-		glUniform3fv(m_shader->GetUniformLocation("object_color"), 1, glm::value_ptr(glm::vec3(1.f, 0.5f, 0.31f)));
+		glUniform3fv(m_shader->GetUniformLocation("object_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
 		glUniform3fv(m_shader->GetUniformLocation("light_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform3fv(m_shader->GetUniformLocation("light_pos"), 1, glm::value_ptr(glm::vec3(4.f, 4.f, 4.f)));
+		glUniform3fv(m_shader->GetUniformLocation("light_pos"), 1, glm::value_ptr(m_light->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));

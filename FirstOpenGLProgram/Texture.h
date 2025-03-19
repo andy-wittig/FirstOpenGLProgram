@@ -2,23 +2,13 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include "Main_Header.h"
 #include "stb_image.h"
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <GL/glu.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <iostream>
-#include <string>
 
 class Texture
 {
 private:
-	unsigned int texture = 0;
+	GLuint texture = 0;
 	int width, height, nr_color_channels;
 public:
 	bool loadTexture(const char* texture_path)
@@ -52,11 +42,6 @@ public:
 	void bindTexture()
 	{
 		glBindTexture(GL_TEXTURE_2D, texture);
-	}
-
-	unsigned int getTexture()
-	{
-		return texture;
 	}
 };
 

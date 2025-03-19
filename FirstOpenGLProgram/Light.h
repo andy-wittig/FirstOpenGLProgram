@@ -2,18 +2,7 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <GL/glu.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "Main_Header.h"
 
 class Light
 {
@@ -24,13 +13,14 @@ private:
 		glm::vec3 vertex;
 	};
 
+	std::vector<unsigned int> Indices;
+	std::vector<Vertex> Vertices;
+
 	GLuint VB;
 	GLuint IB;
 
 	glm::mat4 model;
-
-	std::vector<unsigned int> Indices;
-	std::vector<Vertex> Vertices;
+	glm::vec3 light_pos = glm::vec3(0.f, 0.f, 0.f);
 
 	float angle;
 
@@ -89,19 +79,8 @@ public:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
 
 		//Compute Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(4.f, 4.f, 4.f));
+		model = glm::translate(glm::mat4(1.0f), light_pos);
 		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
-	}
-
-	~Light()
-	{
-		Vertices.clear();
-		Indices.clear();
-	}
-
-	glm::mat4 GetModel()
-	{
-		return model;
 	}
 
 	void Render()
@@ -115,6 +94,28 @@ public:
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 
 		glDisableVertexAttribArray(0);
+	}
+
+	void setPosition(glm::vec3 position)
+	{
+		light_pos = position;
+		model = glm::translate(glm::mat4(1.0f), light_pos);
+	}
+
+	glm::vec3 getPosition()
+	{
+		return light_pos;
+	}
+
+	glm::mat4 GetModel()
+	{
+		return model;
+	}
+
+	~Light()
+	{
+		Vertices.clear();
+		Indices.clear();
 	}
 };
 #endif
