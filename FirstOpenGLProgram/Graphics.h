@@ -14,61 +14,27 @@
 #include <iostream>
 #include <fstream>
 
+std::string processShaderFile(const std::string& shader_file_name)
+{
+	std::ifstream shader_file(shader_file_name);
+
+	if (shader_file.is_open())
+	{
+		std::stringstream buffer;
+		buffer << shader_file.rdbuf();
+		shader_file.close();
+		return buffer.str();
+	}
+	else
+	{
+		shader_file.close();
+		return ""; //file could not be processed
+	}
+}
+
 class Graphics
 {
-private: //TODO autoload in shaders
-	const char* v_shader_source = "#version 460 core\n"
-		"layout (location = 0) in vec3 v_position;\n"
-		"layout (location = 1) in vec3 aNormal;\n"
-		"layout (location = 2) in vec2 v_tex_coords;\n"
-		"out vec3 frag_pos;\n"
-		"out vec3 normal;\n"
-		"out vec2 tex_coords;\n"
-		"uniform mat4 projectionMatrix;\n"
-		"uniform mat4 viewMatrix;\n"
-		"uniform mat4 modelMatrix;\n"
-		"void main() {\n"
-		"frag_pos = vec3(modelMatrix * vec4(v_position, 1.0));\n"
-		"normal = mat3(transpose(inverse(modelMatrix))) * aNormal;\n"
-		"gl_Position = projectionMatrix * viewMatrix * vec4(frag_pos, 1.0);\n"
-		"tex_coords = v_tex_coords; }";
-
-	const char* f_shader_source = "#version 460 core\n"
-		"out vec4 frag_color;\n"
-		"in vec3 normal;\n"
-		"in vec3 frag_pos;\n"
-		"in vec2 tex_coords;\n"
-		"uniform sampler2D Texture;"
-		"uniform vec3 object_color;\n"
-		"uniform vec3 light_color;\n"
-		"uniform vec3 light_pos;\n"
-		"uniform vec3 view_pos;\n"
-		"void main() {\n"
-		"float ambient_strength = 0.1;\n"
-		"vec3 ambient = ambient_strength * light_color;\n"
-		"vec3 norm = normalize(normal);\n"
-		"vec3 light_dir = normalize(light_pos - frag_pos);\n"
-		"float diff = max(dot(norm, light_dir), 0.0);\n"
-		"vec3 diffuse = diff * light_color;\n"
-		"float specular_strength = 0.5;\n"
-		"vec3 view_dir = normalize(view_pos - frag_pos);\n"
-		"vec3 reflect_dir = reflect(-light_dir, norm);\n"
-		"float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
-		"vec3 specular = specular_strength * spec * light_color;\n"
-		"vec3 result = (ambient + diffuse + specular) * object_color;\n"
-		"frag_color = texture(Texture, tex_coords) * vec4(result, 1.0); }";
-
-	const char* v_light_shader_source = "#version 460 core\n"
-		"layout (location = 0) in vec3 v_position;\n"
-		"uniform mat4 projectionMatrix;\n"
-		"uniform mat4 viewMatrix;\n"
-		"uniform mat4 modelMatrix;\n"
-		"void main() { gl_Position = (projectionMatrix * viewMatrix * modelMatrix) * vec4(v_position, 1.0); }";
-
-	const char* f_light_shader_source = "#version 460 core\n"
-		"out vec4 frag_color;\n"
-		"void main() { frag_color = vec4(1.0); }";
-
+private:
 	Camera* m_camera;
 	Shader* m_shader;
 	Shader* m_light_shader;
@@ -123,22 +89,22 @@ public:
 			return false;
 		}
 
-		if (!m_shader->AddShader(GL_VERTEX_SHADER, v_shader_source)) 
+		if (!m_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, v_light_shader_source))
+		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-		if (!m_shader->AddShader(GL_FRAGMENT_SHADER, f_shader_source)) 
+		if (!m_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, f_light_shader_source))
+		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
 			return false;

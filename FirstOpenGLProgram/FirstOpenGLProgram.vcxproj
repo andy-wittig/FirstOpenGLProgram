@@ -152,8 +152,12 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="cube.txt" />
+    <Text Include="f_shader_source.txt" />
     <Text Include="quad.txt" />
     <Text Include="light_cube.txt" />
+    <Text Include="f_light_shader_source.txt" />
+    <Text Include="v_light_shader_source.txt" />
+    <Text Include="v_shader_source.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

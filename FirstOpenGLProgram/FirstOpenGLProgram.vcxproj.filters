@@ -55,5 +55,17 @@
     <Text Include="light_cube.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="v_shader_source.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="f_shader_source.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="v_light_shader_source.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="f_light_shader_source.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
