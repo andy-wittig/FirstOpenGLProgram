@@ -54,7 +54,7 @@ public:
 
 	void UpdateTime(float dt)
 	{
-		camera_speed = CAMERA_SPEED * dt;
+		camera_speed = CAMERA_SPEED * dt; //Delta time keeps the camera's speed consistent across machines.
 	}
 
 	void MoveForward()
@@ -86,7 +86,6 @@ public:
 
 	glm::mat4 GetView()
 	{
-		
 		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
 		return view;
 	}

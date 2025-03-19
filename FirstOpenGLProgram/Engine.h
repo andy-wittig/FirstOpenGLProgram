@@ -22,6 +22,9 @@ private:
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
 
+	double last_mouse_x, last_mouse_y;
+	bool first_click = true;
+
 	glm::vec3 position;
 	float rotation;
 
@@ -87,15 +90,22 @@ public:
 		{
 			double x_pos, y_pos;
 
+			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			if (first_click)
+			{
+				glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
+				first_click = false;
+			}
+
 			glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
 			glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
-			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
+			
 			m_graphics->UpdateMousePos(x_pos, y_pos);
 		}
 		else if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 		{
 			glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			first_click = true;
 		}
 
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) { m_graphics->MoveCameraForward(); }
