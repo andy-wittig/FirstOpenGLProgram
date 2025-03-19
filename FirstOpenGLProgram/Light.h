@@ -1,8 +1,9 @@
 #pragma once
-#ifndef OBJECT_H
-#define OBJECT_H
+#ifndef LIGHT_H
+#define LIGHT_H
 
 #include <vector>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -14,36 +15,28 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "texture.h"
-
-class Object
+class Light
 {
 private:
 
 	struct Vertex
 	{
 		glm::vec3 vertex;
-		glm::vec2 texture_coords;
 	};
-
-	float angle;
-	float rotation_damp = 0.05;
-	float offset_damp = 0.05;
 
 	GLuint VB;
 	GLuint IB;
-	
+
 	glm::mat4 model;
-	
+
 	std::vector<unsigned int> Indices;
 	std::vector<Vertex> Vertices;
 
-	Texture* m_texture;
-	const char* texture_path;
+	float angle;
 
 public:
-	Object(std::string object_file_path, const char* texture_file_path = "undefined_texture.png")
-	{ 
+	Light(std::string object_file_path)
+	{
 		std::ifstream object_file(object_file_path);
 
 		if (object_file.is_open())
@@ -59,8 +52,7 @@ public:
 				if (type == "V")
 				{
 					Vertex m_vertex;
-					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z 
-						>> m_vertex.texture_coords.x >> m_vertex.texture_coords.y;
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z;
 					Vertices.push_back(m_vertex);
 				}
 				else if (type == "I")
@@ -70,7 +62,7 @@ public:
 					{
 						Indices.push_back((unsigned int)std::stoi(index));
 					}
-				}	
+				}
 			}
 			object_file.close();
 		}
@@ -97,18 +89,11 @@ public:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
 
 		//Compute Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(4.f, 4.f, 4.f));
 		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
-
-		//Load Texture
-		m_texture = new Texture();
-		if (!m_texture->loadTexture(texture_file_path))
-		{
-			std::cerr << "Error: Texture Failed to Load!" << std::endl;
-		}
 	}
 
-	~Object()
+	~Light()
 	{
 		Vertices.clear();
 		Indices.clear();
@@ -122,28 +107,14 @@ public:
 	void Render()
 	{
 		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
-
-		m_texture->bindTexture();
 
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 
 		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-	}
-
-	void Update(float delta_time, glm::vec3 offset, float angle_offset)
-	{
-		model = glm::translate(glm::mat4(1.0f), offset * offset_damp);
-		model *= glm::rotate(glm::mat4(1.0f), angle_offset * rotation_damp, glm::vec3(0, 1.0f, 0));
-
-		//Spin Model 
-		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
 	}
 };
 #endif

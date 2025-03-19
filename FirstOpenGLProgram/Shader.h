@@ -96,6 +96,7 @@ public:
 			std::cerr << "Error: Linking Shader Program Failed!\n" << infoLog << std::endl;
 			return false;
 		}
+
 		//Check if Shader Program Validates
 		glValidateProgram(m_shaderProg);
 		glGetProgramiv(m_shaderProg, GL_VALIDATE_STATUS, &compile_success);

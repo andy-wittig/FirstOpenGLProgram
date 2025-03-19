@@ -41,12 +41,18 @@
     <ClInclude Include="Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="cube.txt">
       <Filter>Source Files</Filter>
     </Text>
     <Text Include="quad.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="light_cube.txt">
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>
