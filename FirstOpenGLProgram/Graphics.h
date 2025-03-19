@@ -16,23 +16,42 @@
 
 class Graphics
 {
-private:
+private: //TODO autoload in shaders
 	const char* v_shader_source = "#version 460 core\n"
 		"layout (location = 0) in vec3 v_position;\n"
-		"layout (location = 1) in vec2 v_tex_coords;\n"
+		"layout (location = 1) in vec3 aNormal;\n"
+		"layout (location = 2) in vec2 v_tex_coords;\n"
+		"out vec3 frag_pos;\n"
+		"out vec3 normal;\n"
 		"out vec2 tex_coords;\n"
 		"uniform mat4 projectionMatrix;\n"
 		"uniform mat4 viewMatrix;\n"
 		"uniform mat4 modelMatrix;\n"
-		"void main() { gl_Position = (projectionMatrix * viewMatrix * modelMatrix) * vec4(v_position, 1.0);\n tex_coords = v_tex_coords; }";
+		"void main() {\n"
+		"frag_pos = vec3(modelMatrix * vec4(v_position, 1.0));\n"
+		"normal = mat3(transpose(inverse(modelMatrix))) * aNormal;\n"
+		"gl_Position = projectionMatrix * viewMatrix * vec4(frag_pos, 1.0);\n"
+		"tex_coords = v_tex_coords; }";
 
 	const char* f_shader_source = "#version 460 core\n"
 		"out vec4 frag_color;\n"
+		"in vec3 normal;\n"
+		"in vec3 frag_pos;\n"
 		"in vec2 tex_coords;\n"
 		"uniform sampler2D Texture;"
 		"uniform vec3 object_color;\n"
 		"uniform vec3 light_color;\n"
-		"void main() { frag_color = texture(Texture, tex_coords) * vec4(light_color * object_color, 1.0); }";
+		"uniform vec3 light_pos;\n"
+		"uniform vec3 view_pos;\n"
+		"void main() {\n"
+		"float ambient_strength = 0.1;\n"
+		"vec3 ambient = ambient_strength * light_color;\n"
+		"vec3 norm = normalize(normal);\n"
+		"vec3 light_dir = normalize(light_pos - frag_pos);\n"
+		"float diff = max(dot(norm, light_dir), 0.0);\n"
+		"vec3 diffuse = diff * light_color;\n"
+		"vec3 result = (ambient + diffuse) * object_color;\n"
+		"frag_color = texture(Texture, tex_coords) * vec4(result, 1.0); }";
 
 	const char* v_light_shader_source = "#version 460 core\n"
 		"layout (location = 0) in vec3 v_position;\n"
@@ -147,7 +166,7 @@ public:
 
 	void Render()
 	{
-		glClearColor(0.38, 0.64, 0.47, 1.0); //background color
+		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Objects
@@ -156,8 +175,10 @@ public:
 		//Pass Uniforms to Shader
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		
 		glUniform3fv(m_shader->GetUniformLocation("object_color"), 1, glm::value_ptr(glm::vec3(1.f, 0.5f, 0.31f)));
 		glUniform3fv(m_shader->GetUniformLocation("light_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
+		glUniform3fv(m_shader->GetUniformLocation("light_pos"), 1, glm::value_ptr(glm::vec3(4.f, 4.f, 4.f)));
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
 		m_quad->Render();

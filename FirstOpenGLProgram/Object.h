@@ -23,6 +23,7 @@ private:
 	struct Vertex
 	{
 		glm::vec3 vertex;
+		glm::vec3 normal;
 		glm::vec2 texture_coords;
 	};
 
@@ -59,7 +60,8 @@ public:
 				if (type == "V")
 				{
 					Vertex m_vertex;
-					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z 
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z
+						>> m_vertex.normal.x >> m_vertex.normal.y >> m_vertex.normal.z
 						>> m_vertex.texture_coords.x >> m_vertex.texture_coords.y;
 					Vertices.push_back(m_vertex);
 				}
@@ -123,10 +125,12 @@ public:
 	{
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
 		m_texture->bindTexture();
@@ -135,6 +139,7 @@ public:
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 	}
 
 	void Update(float delta_time, glm::vec3 offset, float angle_offset)
