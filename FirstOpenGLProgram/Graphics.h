@@ -153,16 +153,16 @@ public:
 		glUniform3fv(m_shader->GetUniformLocation("light.position"), 1, glm::value_ptr(m_light->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("light.ambient"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
-		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(0.9f, 0.9f, 0.9f)));
-		glUniform3fv(m_shader->GetUniformLocation("light.specular"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(0.8f, 0.6f, 0.2f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.specular"), 1, glm::value_ptr(glm::vec3(0.8f, 0.6f, 0.2f)));
 		
 		//Object Render
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 65.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
 		m_quad->Render();
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
 
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
