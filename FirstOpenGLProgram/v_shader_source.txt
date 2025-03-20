@@ -1,11 +1,11 @@
 #version 460 core
 
 layout (location = 0) in vec3 v_position;
-layout (location = 1) in vec3 aNormal;
+layout (location = 1) in vec3 v_normal;
 layout (location = 2) in vec2 v_tex_coords;
 
 out vec3 frag_pos;
-out vec3 normal;
+out vec3 normal_pos;
 out vec2 tex_coords;
 
 uniform mat4 projectionMatrix;
@@ -15,7 +15,8 @@ uniform mat4 modelMatrix;
 void main() 
 {
 	frag_pos = vec3(modelMatrix * vec4(v_position, 1.0));
-	normal = mat3(transpose(inverse(modelMatrix))) * aNormal;
+	normal_pos = mat3(transpose(inverse(modelMatrix))) * v_normal;
+
 	gl_Position = projectionMatrix * viewMatrix * vec4(frag_pos, 1.0);
 	tex_coords = v_tex_coords; 
 };

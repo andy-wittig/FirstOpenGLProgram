@@ -135,28 +135,39 @@ public:
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//Objects
 		m_shader->Enable();
 
 		//Pass Uniforms to Shader
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		
-		glUniform3fv(m_shader->GetUniformLocation("object_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform3fv(m_shader->GetUniformLocation("light_color"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform3fv(m_shader->GetUniformLocation("light_pos"), 1, glm::value_ptr(m_light->getPosition()));
+
+		//Light Properties
+		glUniform3fv(m_shader->GetUniformLocation("light.position"), 1, glm::value_ptr(m_light->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
+		glUniform3fv(m_shader->GetUniformLocation("light.ambient"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.specular"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		
+		//Object Render
+		glUniform3fv(m_shader->GetUniformLocation("material.ambient"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("material.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("material.specular"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 70.0f);
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
 		m_quad->Render();
 
+		glUniform3fv(m_shader->GetUniformLocation("material.ambient"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("material.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("material.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 32.0f);
+
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();
 
-		//Lights
+		//Light Render
 		m_light_shader->Enable();
 
-		////Pass Uniforms to Light Shader
 		glUniformMatrix4fv(m_lightProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_lightViewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
