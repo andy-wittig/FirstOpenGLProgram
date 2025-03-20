@@ -3,7 +3,7 @@
 #define OBJECT_H
 
 #include "Main_Header.h"
-#include "texture.h"
+#include "Texture.h"
 
 class Object
 {
@@ -23,17 +23,16 @@ private:
 	GLuint IB;
 
 	Texture* m_texture;
-	std::string texture_path;
 	
 	glm::mat4 model;
 	glm::vec3 object_pos = glm::vec3(0.f, 0.f, 0.f);
 
 	float angle;
-	float rotation_damp = 0.05;
-	float offset_damp = 0.05;
+	float rotation_speed = 0.5f;
+	float move_speed = 0.8f;
 
 public:
-	Object(std::string object_file_path, std::string texture_file_path = "undefined_texture.png")
+	void Initialize(const char* object_file_path, const char* diffuse_map_path, const char* specular_map_path)
 	{ 
 		std::ifstream object_file(object_file_path);
 
@@ -91,12 +90,9 @@ public:
 		model = glm::translate(glm::mat4(1.0f), object_pos);
 		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
 
-		//Load Texture
+		//Load Textures
 		m_texture = new Texture();
-		if (!m_texture->loadTexture(texture_file_path.c_str()))
-		{
-			std::cerr << "Error: Texture Failed to Load!" << std::endl;
-		}
+		m_texture->Initialize(diffuse_map_path, specular_map_path);
 	}
 
 	void Render()
@@ -111,7 +107,7 @@ public:
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
-		m_texture->bindTexture();
+		m_texture->bindTextures();
 
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -122,8 +118,8 @@ public:
 
 	void Update(float delta_time, glm::vec3 offset, float angle_offset)
 	{
-		model = glm::translate(glm::mat4(1.0f), offset * offset_damp);
-		model *= glm::rotate(glm::mat4(1.0f), angle_offset * rotation_damp, glm::vec3(0, 1.0f, 0));
+		model = glm::translate(glm::mat4(1.0f), object_pos + offset * delta_time * move_speed);
+		model *= glm::rotate(glm::mat4(1.0f), angle_offset * delta_time * rotation_speed, glm::vec3(0, 1.0f, 0));
 
 		//Spin Model 
 		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
@@ -139,7 +135,7 @@ public:
 		return object_pos;
 	}
 
-	void setPos(glm::vec3 position)
+	void setPosition(glm::vec3 position)
 	{
 		object_pos = position;
 		model = glm::translate(glm::mat4(1.0f), object_pos);

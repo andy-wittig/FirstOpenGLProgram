@@ -21,7 +21,6 @@ std::string processShaderFile(const std::string& shader_file_name)
 	}
 	else
 	{
-		shader_file.close();
 		return ""; //file could not be processed
 	}
 }
@@ -63,12 +62,6 @@ public:
 			std::cerr << "Error: Camera Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-
-		m_quad = new Object("quad.txt", "wood_floor.jpg");
-		m_cube = new Object("cube.txt", "crate.jpg");
-
-		m_light = new Light("light_cube.txt");
-		m_light->setPosition(glm::vec3(5.f, 5.f, 5.f));
 
 		m_shader = new Shader();
 		m_light_shader = new Shader();
@@ -116,6 +109,18 @@ public:
 			return false;
 		}
 
+		m_quad = new Object();
+		m_cube = new Object();
+
+		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
+		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
+		m_cube->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+
+		m_light = new Light();
+
+		m_light->Initialize("light_cube.txt");
+		m_light->setPosition(glm::vec3(5.f, 3.f, 5.f));
+
 		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
 		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
 		m_modelMatrix = m_shader->GetUniformLocation("modelMatrix");
@@ -137,30 +142,27 @@ public:
 
 		m_shader->Enable();
 
-		//Pass Uniforms to Shader
+		glUniform1i(m_shader->GetUniformLocation("material.diffuse"), 0);
+		glUniform1i(m_shader->GetUniformLocation("material.specular"), 1);
+
+		//Pass Uniforms to Shaders
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
 		//Light Properties
 		glUniform3fv(m_shader->GetUniformLocation("light.position"), 1, glm::value_ptr(m_light->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform3fv(m_shader->GetUniformLocation("light.ambient"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
-		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.ambient"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
+		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(0.9f, 0.9f, 0.9f)));
 		glUniform3fv(m_shader->GetUniformLocation("light.specular"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
 		
 		//Object Render
-		glUniform3fv(m_shader->GetUniformLocation("material.ambient"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-		glUniform3fv(m_shader->GetUniformLocation("material.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-		glUniform3fv(m_shader->GetUniformLocation("material.specular"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 70.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 65.0f);
 		
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
 		m_quad->Render();
 
-		glUniform3fv(m_shader->GetUniformLocation("material.ambient"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-		glUniform3fv(m_shader->GetUniformLocation("material.diffuse"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-		glUniform3fv(m_shader->GetUniformLocation("material.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 32.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
 
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
 		m_cube->Render();

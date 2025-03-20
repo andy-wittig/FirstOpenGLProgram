@@ -25,7 +25,7 @@ private:
 	float angle;
 
 public:
-	Light(std::string object_file_path)
+	void Initialize(const char* object_file_path)
 	{
 		std::ifstream object_file(object_file_path);
 
