@@ -46,9 +46,9 @@ private:
 	GLint m_lightProjectionMatrix;
 	GLint m_lightViewMatrix;
 
-	std::vector<float> speed = { 0.1f, 0.0f, 0.0f };
-	std::vector<float> dist = { 0.05f, 0.0f, 0.0f };
-	std::vector<float> rotation_speed = { 0.04f, 0.0f, 0.0f };
+	std::vector<float> speed = { 0.35f, 0.0f, 0.35f };
+	std::vector<float> dist = { 5.f, 0.0f, 5.0f };
+	std::vector<float> rotation_speed = { 0.75f, 0.0f, 0.75f };
 	std::vector<float> scale = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 rotation_vector = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 tmat;
@@ -137,13 +137,12 @@ public:
 		//float tvec3 = glm::linearRand(-10.0f, 10.0f);
 		//m_cube->setRotation(angle);
 
-		m_cube->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
-		m_pyramid->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+		m_quad->setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
 
 		m_light = new Light();
 
 		m_light->Initialize("light_cube.txt");
-		m_light->setPosition(glm::vec3(0.f, 5.f, 0.f));
+		m_light->setPosition(glm::vec3(0.f, 8.f, 0.f));
 
 		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
 		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
@@ -180,20 +179,20 @@ public:
 		glUniform3fv(m_shader->GetUniformLocation("light.diffuse"), 1, glm::value_ptr(glm::vec3(0.8f, 0.6f, 0.2f)));
 		glUniform3fv(m_shader->GetUniformLocation("light.specular"), 1, glm::value_ptr(glm::vec3(0.8f, 0.6f, 0.2f)));
 		
-		//Object Render
+		//Object Rendering
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->getModel()));
 		m_quad->Render();
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 65.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
 		m_cube->Render();
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 40.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
 		m_pyramid->Render();
 
-		//Light Render
+		//Light Rendering
 		m_light_shader->Enable();
 
 		glUniformMatrix4fv(m_lightProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
@@ -254,19 +253,22 @@ public:
 	void computeTransforms(double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotation_speed, std::vector<float> scale,
 		glm::vec3 rotation_vector, glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
 	{
-		tmat = glm::translate(glm::mat4(1.f), glm::vec3(cos(speed[0] * dt) * dist[0], sin(speed[1] * dt) * dist[1], sin(speed[2] * dt) * dist[2]));
-		rmat = glm::rotate(glm::mat4(1.f), rotation_speed[0] * (float)dt, rotation_vector);
+		double elapsed_time = glfwGetTime();
+		tmat = glm::translate(glm::mat4(1.f), glm::vec3(cos(speed[0] * elapsed_time) * dist[0], sin(speed[1] * elapsed_time) * dist[1], sin(speed[2] * elapsed_time) * dist[2]));
+		rmat = glm::rotate(glm::mat4(1.f), rotation_speed[0] * (float)elapsed_time, rotation_vector);
 		smat = glm::scale(glm::vec3(scale[0], scale[1], scale[2]));
 	}
 
 	void Update(double dt, glm::vec3 pos, float angle, float fov)
 	{
-		//Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
 
+		//Objects transform should be updated here so different objects can move independently.
 		computeTransforms(dt, speed, dist, rotation_speed, scale, rotation_vector, tmat, rmat, smat);
-		m_pyramid->Update(tmat * rmat * smat, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		m_cube->Update(tmat * rmat * smat);
+		m_pyramid->Update(rmat);
 	}
 };
 #endif

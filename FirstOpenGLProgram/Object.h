@@ -25,11 +25,7 @@ private:
 	Texture* m_texture;
 	
 	glm::mat4 model;
-	glm::vec3 object_pos = glm::vec3(0.f, 0.f, 0.f);
-
-	float angle;
-	float rotation_speed = 0.5f;
-	float move_speed = 0.8f;
+	glm::vec3 world_origin = glm::vec3(0.f, 0.f, 0.f);
 
 public:
 	void Initialize(const char* object_file_path, const char* diffuse_map_path, const char* specular_map_path)
@@ -48,10 +44,8 @@ public:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
 
 		//Compute Model Matrix
-		angle = 0.0f;
-
-		model = glm::translate(glm::mat4(1.0f), object_pos);
-		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), world_origin);
+		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//Load Textures
 		m_texture = new Texture();
@@ -65,10 +59,10 @@ public:
 		glEnableVertexAttribArray(2);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
 		m_texture->bindTextures();
 
@@ -123,9 +117,10 @@ public:
 		}
 	}
 
-	void Update(glm::mat4 model_transform, glm::vec3 position_offset)
+	void Update(glm::mat4 model_transform)
 	{
-		model *= model_transform;
+		model = model_transform;
+		std::cout << glm::to_string(model) << std::endl;
 	}
 
 	glm::mat4 getModel()
@@ -133,19 +128,9 @@ public:
 		return model;
 	}
 
-	glm::vec3 getPosition()
-	{
-		return object_pos;
-	}
-
 	void setPosition(glm::vec3 position)
 	{
 		model = glm::translate(glm::mat4(1.0f), position);
-	}
-
-	void setRotation(float rot_degrees)
-	{
-		angle = glm::radians(rot_degrees);
 	}
 
 	~Object()
