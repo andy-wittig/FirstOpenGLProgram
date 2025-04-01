@@ -5,6 +5,7 @@
 #include "Main_Header.h"
 #include "Camera.h"
 #include "Object.h"
+#include "Pyramid.h"
 #include "Light.h"
 #include "Shader.h"
 
@@ -34,6 +35,7 @@ private:
 
 	Object* m_quad;
 	Object* m_cube;
+	Pyramid* m_pyramid;
 
 	Light* m_light;
 
@@ -111,10 +113,13 @@ public:
 
 		m_quad = new Object();
 		m_cube = new Object();
+		m_pyramid = new Pyramid();
 
 		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
 		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
 		m_cube->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+		m_pyramid->Initialize("pyramid.txt", "crate.png", "crate_specular_map.png");
+		m_pyramid->setPosition(glm::vec3(-3.0f, 1.0f, -3.0f));
 
 		m_light = new Light();
 
@@ -158,14 +163,16 @@ public:
 		
 		//Object Render
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
-		
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->GetModel()));
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->getModel()));
 		m_quad->Render();
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
-
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->GetModel()));
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
 		m_cube->Render();
+
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
+		m_pyramid->Render();
 
 		//Light Render
 		m_light_shader->Enable();
@@ -173,7 +180,7 @@ public:
 		glUniformMatrix4fv(m_lightProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_lightViewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
-		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_light->GetModel()));
+		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_light->getModel()));
 		m_light->Render();
 
 		auto error = glGetError();
@@ -227,6 +234,7 @@ public:
 
 	void Update(float dt, glm::vec3 pos, float angle, float fov)
 	{
+		//Objects should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
 		m_cube->Update(dt, pos, angle);

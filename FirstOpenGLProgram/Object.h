@@ -34,46 +34,8 @@ private:
 public:
 	void Initialize(const char* object_file_path, const char* diffuse_map_path, const char* specular_map_path)
 	{ 
-		std::ifstream object_file(object_file_path);
 
-		if (object_file.is_open())
-		{
-			std::string line;
-
-			while (getline(object_file, line))
-			{
-				std::stringstream sstream(line);
-				std::string type;
-				sstream >> type;
-
-				if (type == "V")
-				{
-					Vertex m_vertex;
-					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z
-						>> m_vertex.normal.x >> m_vertex.normal.y >> m_vertex.normal.z
-						>> m_vertex.texture_coords.x >> m_vertex.texture_coords.y;
-					Vertices.push_back(m_vertex);
-				}
-				else if (type == "I")
-				{
-					std::string index;
-					while (sstream >> index)
-					{
-						Indices.push_back((unsigned int)std::stoi(index));
-					}
-				}	
-			}
-			object_file.close();
-		}
-		else
-		{
-			std::cerr << "Error: Could not Open File!\n" << std::endl;
-		}
-
-		for (unsigned int i = 0; i < Indices.size(); i++)
-		{
-			Indices[i] = Indices[i] - 1;
-		}
+		loadModel(object_file_path);
 
 		//Vertex VBO
 		glGenBuffers(1, &VB);
@@ -116,6 +78,50 @@ public:
 		glDisableVertexAttribArray(2);
 	}
 
+	void loadModel(const char* file_path)
+	{
+		std::ifstream object_file(file_path);
+
+		if (object_file.is_open())
+		{
+			std::string line;
+
+			while (getline(object_file, line))
+			{
+				std::stringstream sstream(line);
+				std::string type;
+				sstream >> type;
+
+				if (type == "V")
+				{
+					Vertex m_vertex;
+					sstream >> m_vertex.vertex.x >> m_vertex.vertex.y >> m_vertex.vertex.z
+						>> m_vertex.normal.x >> m_vertex.normal.y >> m_vertex.normal.z
+						>> m_vertex.texture_coords.x >> m_vertex.texture_coords.y;
+					Vertices.push_back(m_vertex);
+				}
+				else if (type == "I")
+				{
+					std::string index;
+					while (sstream >> index)
+					{
+						Indices.push_back((unsigned int)std::stoi(index));
+					}
+				}
+			}
+			object_file.close();
+		}
+		else
+		{
+			std::cerr << "Error: Could not Open File!\n" << std::endl;
+		}
+
+		for (unsigned int i = 0; i < Indices.size(); i++)
+		{
+			Indices[i] = Indices[i] - 1;
+		}
+	}
+
 	void Update(float delta_time, glm::vec3 offset, float angle_offset)
 	{
 		model = glm::translate(glm::mat4(1.0f), object_pos + offset * delta_time * move_speed);
@@ -125,7 +131,7 @@ public:
 		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
 	}
 
-	glm::mat4 GetModel()
+	glm::mat4 getModel()
 	{
 		return model;
 	}
