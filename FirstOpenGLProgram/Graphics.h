@@ -5,7 +5,6 @@
 #include "Main_Header.h"
 #include "Camera.h"
 #include "Object.h"
-#include "Pyramid.h"
 #include "Light.h"
 #include "Shader.h"
 
@@ -35,7 +34,7 @@ private:
 
 	Object* m_quad;
 	Object* m_cube;
-	Pyramid* m_pyramid;
+	Object* m_pyramid;
 
 	Light* m_light;
 
@@ -113,25 +112,27 @@ public:
 
 		m_quad = new Object();
 		m_cube = new Object();
-		m_pyramid = new Pyramid();
+		m_pyramid = new Object();
 
 		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
 		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
+		m_pyramid->Initialize("pyramid.txt", "pyramid.png", "pyramid_specular_map.png");
 
 		srand(time(0)); //Update seed of random number generator based on current time
 
-		float angle = glm::linearRand(0.0f, 360.0f);
-		float tvec1 = glm::linearRand(-10.0f, 10.0f);
-		float tvec2 = glm::linearRand(1.0f, 10.0f);
-		float tvec3 = glm::linearRand(-10.0f, 10.0f);
+		//float angle = glm::linearRand(0.0f, 360.0f);
+		//float tvec1 = glm::linearRand(-10.0f, 10.0f);
+		//float tvec2 = glm::linearRand(1.0f, 10.0f);
+		//float tvec3 = glm::linearRand(-10.0f, 10.0f);
 
-		m_cube->setPosition(glm::vec3(tvec1, tvec2, tvec3));
-		m_cube->setRotation(angle);
+		//m_cube->setRotation(angle);
+		m_cube->setPosition(glm::vec3(-2.f, 1.f, -2.f));
+		m_pyramid->setPosition(glm::vec3(2.f, 0.f, 2.f));
 
 		m_light = new Light();
 
 		m_light->Initialize("light_cube.txt");
-		m_light->setPosition(glm::vec3(5.f, 3.f, 5.f));
+		m_light->setPosition(glm::vec3(0.f, 5.f, 0.f));
 
 		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
 		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
@@ -244,7 +245,10 @@ public:
 		//Objects should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
+
+
 		m_cube->Update(dt, pos, angle);
+		m_pyramid->Update(dt, pos, angle);
 	}
 };
 #endif
