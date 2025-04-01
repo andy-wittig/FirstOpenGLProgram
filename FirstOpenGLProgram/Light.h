@@ -107,7 +107,7 @@ public:
 		return light_pos;
 	}
 
-	glm::mat4 GetModel()
+	glm::mat4 getModel()
 	{
 		return model;
 	}

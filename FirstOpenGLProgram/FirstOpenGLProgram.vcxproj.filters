@@ -53,6 +53,9 @@
     <ClInclude Include="Main_Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pyramid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="v_shader_source.txt">
@@ -74,6 +77,9 @@
       <Filter>Source Files\models</Filter>
     </Text>
     <Text Include="cube.txt">
+      <Filter>Source Files\models</Filter>
+    </Text>
+    <Text Include="pyramid.txt">
       <Filter>Source Files\models</Filter>
     </Text>
   </ItemGroup>
