@@ -114,7 +114,16 @@ public:
 
 		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
 		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
-		m_cube->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+
+		srand(time(0)); //Update seed of random number generator based on current time
+
+		float angle = glm::linearRand(0.0f, 360.0f);
+		float tvec1 = glm::linearRand(-10.0f, 10.0f);
+		float tvec2 = glm::linearRand(1.0f, 10.0f);
+		float tvec3 = glm::linearRand(-10.0f, 10.0f);
+
+		m_cube->setPosition(glm::vec3(tvec1, tvec2, tvec3));
+		m_cube->setRotation(angle);
 
 		m_light = new Light();
 

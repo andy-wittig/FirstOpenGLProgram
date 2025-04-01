@@ -87,8 +87,9 @@ public:
 
 		//Compute Model Matrix
 		angle = 0.0f;
+
 		model = glm::translate(glm::mat4(1.0f), object_pos);
-		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1.0f, .0f));
+		model *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//Load Textures
 		m_texture = new Texture();
@@ -118,8 +119,8 @@ public:
 
 	void Update(float delta_time, glm::vec3 offset, float angle_offset)
 	{
-		model = glm::translate(glm::mat4(1.0f), object_pos + offset * delta_time * move_speed);
-		model *= glm::rotate(glm::mat4(1.0f), angle_offset * delta_time * rotation_speed, glm::vec3(0, 1.0f, 0));
+		model = glm::translate(glm::mat4(1.0f), object_pos + (offset * delta_time * move_speed));
+		model *= glm::rotate(glm::mat4(1.0f), angle + (angle_offset * delta_time * rotation_speed), glm::vec3(0, 1.0f, 0));
 
 		//Spin Model 
 		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
@@ -138,7 +139,11 @@ public:
 	void setPosition(glm::vec3 position)
 	{
 		object_pos = position;
-		model = glm::translate(glm::mat4(1.0f), object_pos);
+	}
+
+	void setRotation(float rot_degrees)
+	{
+		angle = glm::radians(rot_degrees);
 	}
 
 	~Object()
