@@ -123,13 +123,9 @@ public:
 		}
 	}
 
-	void Update(float delta_time, glm::vec3 offset, float angle_offset)
+	void Update(glm::mat4 model_transform, glm::vec3 position_offset)
 	{
-		model = glm::translate(glm::mat4(1.0f), object_pos + (offset * delta_time * move_speed));
-		model *= glm::rotate(glm::mat4(1.0f), angle + (angle_offset * delta_time * rotation_speed), glm::vec3(0, 1.0f, 0));
-
-		//Spin Model 
-		//model *= glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * rotation_damp, glm::vec3(0, 1.0f, 0));
+		model *= model_transform;
 	}
 
 	glm::mat4 getModel()
@@ -144,7 +140,7 @@ public:
 
 	void setPosition(glm::vec3 position)
 	{
-		object_pos = position;
+		model = glm::translate(glm::mat4(1.0f), position);
 	}
 
 	void setRotation(float rot_degrees)

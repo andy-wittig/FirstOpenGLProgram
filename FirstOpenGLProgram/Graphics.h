@@ -45,6 +45,16 @@ private:
 	GLint m_lightModelMatrix;
 	GLint m_lightProjectionMatrix;
 	GLint m_lightViewMatrix;
+
+	std::vector<float> speed = { 0.1f, 0.0f, 0.0f };
+	std::vector<float> dist = { 0.05f, 0.0f, 0.0f };
+	std::vector<float> rotation_speed = { 0.04f, 0.0f, 0.0f };
+	std::vector<float> scale = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 rotation_vector = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::mat4 tmat;
+	glm::mat4 rmat;
+	glm::mat4 smat;
+
 public:
 	bool Initialize(int width, int height)
 	{
@@ -120,14 +130,15 @@ public:
 
 		srand(time(0)); //Update seed of random number generator based on current time
 
+		//Random Positioning
 		//float angle = glm::linearRand(0.0f, 360.0f);
 		//float tvec1 = glm::linearRand(-10.0f, 10.0f);
 		//float tvec2 = glm::linearRand(1.0f, 10.0f);
 		//float tvec3 = glm::linearRand(-10.0f, 10.0f);
-
 		//m_cube->setRotation(angle);
-		m_cube->setPosition(glm::vec3(-2.f, 1.f, -2.f));
-		m_pyramid->setPosition(glm::vec3(2.f, 0.f, 2.f));
+
+		m_cube->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+		m_pyramid->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
 		m_light = new Light();
 
@@ -240,15 +251,22 @@ public:
 	void MoveCameraLeft() { m_camera->MoveLeft(); }
 	void MoveCameraRight() { m_camera->MoveRight(); }
 
-	void Update(float dt, glm::vec3 pos, float angle, float fov)
+	void computeTransforms(double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotation_speed, std::vector<float> scale,
+		glm::vec3 rotation_vector, glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
 	{
-		//Objects should be updated here so different objects can move independently.
+		tmat = glm::translate(glm::mat4(1.f), glm::vec3(cos(speed[0] * dt) * dist[0], sin(speed[1] * dt) * dist[1], sin(speed[2] * dt) * dist[2]));
+		rmat = glm::rotate(glm::mat4(1.f), rotation_speed[0] * (float)dt, rotation_vector);
+		smat = glm::scale(glm::vec3(scale[0], scale[1], scale[2]));
+	}
+
+	void Update(double dt, glm::vec3 pos, float angle, float fov)
+	{
+		//Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
 
-
-		m_cube->Update(dt, pos, angle);
-		m_pyramid->Update(dt, pos, angle);
+		computeTransforms(dt, speed, dist, rotation_speed, scale, rotation_vector, tmat, rmat, smat);
+		m_pyramid->Update(tmat * rmat * smat, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 };
 #endif
