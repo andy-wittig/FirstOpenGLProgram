@@ -47,14 +47,11 @@ private:
 	GLint m_lightProjectionMatrix;
 	GLint m_lightViewMatrix;
 
-	std::vector<float> speed = { 0.35f, 0.0f, 0.35f };
-	std::vector<float> dist = { 5.f, 0.0f, 5.0f };
-	std::vector<float> rotation_speed = { 0.75f, 0.0f, 0.75f };
-	std::vector<float> scale = { 1.0f, 1.0f, 1.0f };
-	glm::vec3 rotation_vector = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 tmat;
 	glm::mat4 rmat;
 	glm::mat4 smat;
+	glm::mat4 t_offset;
+	glm::mat4 r_offset;
 	std::stack<glm::mat4> transformation_stack;
 
 public:
@@ -135,14 +132,31 @@ public:
 		srand(time(0)); //Update seed of random number generator based on current time
 
 		//Random Positioning
-		//float angle = glm::linearRand(0.0f, 360.0f);
-		//float tvec1 = glm::linearRand(-10.0f, 10.0f);
-		//float tvec2 = glm::linearRand(1.0f, 10.0f);
-		//float tvec3 = glm::linearRand(-10.0f, 10.0f);
-		//m_cube->setRotation(angle);
+		float angle = glm::linearRand(0.0f, 360.0f);
+		float tvec1 = glm::linearRand(-5.0f, 5.0f);
+		float tvec2 = glm::linearRand(1.0f, 5.0f);
+		float tvec3 = glm::linearRand(-5.0f, 5.0f);
+
+		glm::vec3 axis;
+		int rand_axis_choice = rand() % 3; //range from 0-2
+
+		switch (rand_axis_choice)
+		{
+		case 0: //x axis of rotation
+			axis = glm::vec3(1.0f, 0.0f, 0.0f);
+			break;
+		case 1: //y axis of rotation
+			axis = glm::vec3(0.0f, 1.0f, 0.0f);
+			break;
+		case 2: //z axis of rotation
+			axis = glm::vec3(0.0f, 0.0f, 1.0f);
+			break;
+		}
+
+		t_offset = glm::translate(glm::mat4(1.f), glm::vec3(tvec1, tvec2, tvec3));
+		r_offset = glm::rotate(glm::mat4(1.0f), glm::radians(angle), axis);
 
 		m_quad->setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
-		m_crystal->setPosition(glm::vec3(3.f, 0.f, 3.f));
 
 		m_light = new Light();
 
@@ -272,37 +286,48 @@ public:
 	{ //Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
-		
-		computeTransforms(dt, speed, dist, rotation_speed, scale, rotation_vector, tmat, rmat, smat);
+
+		//pyramid transform
+		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(tmat);
 		transformation_stack.push(rmat);
 		transformation_stack.push(smat);
 
-		glm::mat4 parent_matrix = (tmat * rmat * smat);
-
-		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, rotation_speed, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		//cube transform
+		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 6.f, 0.0f, 6.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(tmat);
 		transformation_stack.push(rmat);
 		transformation_stack.push(smat);
 
+		//crystal transform
+		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		transformation_stack.push(tmat);
+		transformation_stack.push(rmat);
+		transformation_stack.push(smat);
+
+		//Stack
+		getTransformStack(tmat, rmat, smat);
+		glm::mat4 crystal_matrix = tmat * rmat * smat;
+
+		getTransformStack(tmat, rmat, smat);
+		glm::mat4 cube_matrix = tmat * rmat * smat;
+
+		getTransformStack(tmat, rmat, smat);
+		glm::mat4 pyramid_matrix = t_offset * r_offset * tmat * rmat * smat;
+
+		m_pyramid->Update(pyramid_matrix);
+		m_cube->Update(pyramid_matrix * cube_matrix);
+		m_crystal->Update(pyramid_matrix * cube_matrix * crystal_matrix);
+	}
+
+	void getTransformStack(glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
+	{
 		smat = transformation_stack.top();
 		transformation_stack.pop();
 		rmat = transformation_stack.top();
 		transformation_stack.pop();
 		tmat = transformation_stack.top();
 		transformation_stack.pop();
-
-		m_crystal->Update(parent_matrix * (tmat * rmat * smat));
-
-		smat = transformation_stack.top();
-		transformation_stack.pop();
-		rmat = transformation_stack.top();
-		transformation_stack.pop();
-		tmat = transformation_stack.top();
-		transformation_stack.pop();
-
-		m_pyramid->Update(rmat);
-		m_cube->Update(tmat * rmat * smat);
 	}
 };
 #endif
