@@ -120,7 +120,7 @@ public:
 	void Update(glm::mat4 model_transform)
 	{
 		model = model_transform;
-		std::cout << glm::to_string(model) << std::endl;
+		//std::cout << glm::to_string(model) << std::endl;
 	}
 
 	glm::mat4 getModel()

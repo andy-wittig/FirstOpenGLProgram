@@ -35,6 +35,7 @@ private:
 	Object* m_quad;
 	Object* m_cube;
 	Object* m_pyramid;
+	Object* m_crystal;
 
 	Light* m_light;
 
@@ -54,6 +55,7 @@ private:
 	glm::mat4 tmat;
 	glm::mat4 rmat;
 	glm::mat4 smat;
+	std::stack<glm::mat4> transformation_stack;
 
 public:
 	bool Initialize(int width, int height)
@@ -123,10 +125,12 @@ public:
 		m_quad = new Object();
 		m_cube = new Object();
 		m_pyramid = new Object();
+		m_crystal = new Object();
 
 		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
 		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
 		m_pyramid->Initialize("pyramid.txt", "pyramid.png", "pyramid_specular_map.png");
+		m_crystal->Initialize("crystal.txt", "crystal.png", "crystal_specular_map.png");
 
 		srand(time(0)); //Update seed of random number generator based on current time
 
@@ -138,11 +142,12 @@ public:
 		//m_cube->setRotation(angle);
 
 		m_quad->setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+		m_crystal->setPosition(glm::vec3(3.f, 0.f, 3.f));
 
 		m_light = new Light();
 
 		m_light->Initialize("light_cube.txt");
-		m_light->setPosition(glm::vec3(0.f, 8.f, 0.f));
+		m_light->setPosition(glm::vec3(0.f, 6.f, 0.f));
 
 		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
 		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
@@ -191,6 +196,10 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 40.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
 		m_pyramid->Render();
+
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 80.0f);
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
+		m_crystal->Render();
 
 		//Light Rendering
 		m_light_shader->Enable();
@@ -260,15 +269,40 @@ public:
 	}
 
 	void Update(double dt, glm::vec3 pos, float angle, float fov)
-	{
+	{ //Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
-
-		//Objects transform should be updated here so different objects can move independently.
+		
 		computeTransforms(dt, speed, dist, rotation_speed, scale, rotation_vector, tmat, rmat, smat);
+		transformation_stack.push(tmat);
+		transformation_stack.push(rmat);
+		transformation_stack.push(smat);
 
-		m_cube->Update(tmat * rmat * smat);
+		glm::mat4 parent_matrix = (tmat * rmat * smat);
+
+		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, rotation_speed, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		transformation_stack.push(tmat);
+		transformation_stack.push(rmat);
+		transformation_stack.push(smat);
+
+		smat = transformation_stack.top();
+		transformation_stack.pop();
+		rmat = transformation_stack.top();
+		transformation_stack.pop();
+		tmat = transformation_stack.top();
+		transformation_stack.pop();
+
+		m_crystal->Update(parent_matrix * (tmat * rmat * smat));
+
+		smat = transformation_stack.top();
+		transformation_stack.pop();
+		rmat = transformation_stack.top();
+		transformation_stack.pop();
+		tmat = transformation_stack.top();
+		transformation_stack.pop();
+
 		m_pyramid->Update(rmat);
+		m_cube->Update(tmat * rmat * smat);
 	}
 };
 #endif
