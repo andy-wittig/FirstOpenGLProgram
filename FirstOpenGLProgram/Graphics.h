@@ -289,44 +289,22 @@ public:
 
 		//pyramid transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		transformation_stack.push(tmat);
-		transformation_stack.push(rmat);
-		transformation_stack.push(smat);
+		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
 
 		//cube transform
 		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 6.f, 0.0f, 6.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		transformation_stack.push(tmat);
-		transformation_stack.push(rmat);
-		transformation_stack.push(smat);
+		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//crystal transform
 		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
-		transformation_stack.push(tmat);
-		transformation_stack.push(rmat);
-		transformation_stack.push(smat);
+		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//Stack
-		getTransformStack(tmat, rmat, smat);
-		glm::mat4 crystal_matrix = tmat * rmat * smat;
-
-		getTransformStack(tmat, rmat, smat);
-		glm::mat4 cube_matrix = tmat * rmat * smat;
-
-		getTransformStack(tmat, rmat, smat);
-		glm::mat4 pyramid_matrix = t_offset * r_offset * tmat * rmat * smat;
-
-		m_pyramid->Update(pyramid_matrix);
-		m_cube->Update(pyramid_matrix * cube_matrix);
-		m_crystal->Update(pyramid_matrix * cube_matrix * crystal_matrix);
-	}
-
-	void getTransformStack(glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
-	{
-		smat = transformation_stack.top();
+		m_crystal->Update(transformation_stack.top());
 		transformation_stack.pop();
-		rmat = transformation_stack.top();
+		m_cube->Update(transformation_stack.top());
 		transformation_stack.pop();
-		tmat = transformation_stack.top();
+		m_pyramid->Update(transformation_stack.top());
 		transformation_stack.pop();
 	}
 };
