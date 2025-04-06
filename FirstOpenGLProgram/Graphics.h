@@ -182,7 +182,10 @@ public:
 		m_lightViewMatrix = m_light_shader->GetUniformLocation("viewMatrix");
 		m_lightModelMatrix = m_light_shader->GetUniformLocation("modelMatrix");
 
+		//GL Settings
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDepthFunc(GL_LESS);
 
 		return true;
@@ -197,6 +200,7 @@ public:
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		glUniform1i(m_shader->GetUniformLocation("material.diffuse"), 0);
 		glUniform1i(m_shader->GetUniformLocation("material.specular"), 1);
+		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
 		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
@@ -235,7 +239,7 @@ public:
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
 		m_pyramid->Render();
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 100.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 125.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
 		m_crystal->Render();
 
@@ -309,7 +313,7 @@ public:
 		smat = glm::scale(glm::vec3(scale[0], scale[1], scale[2]));
 	}
 
-	void Update(double dt, glm::vec3 pos, float angle, float fov)
+	void Update(double dt, float fov)
 	{ //Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);

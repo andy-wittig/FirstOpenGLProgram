@@ -93,7 +93,7 @@ public:
 	{
 		m_graphics->Render();
 		m_window->Swap();
-		m_graphics->Update(time, position, rotation, fov);
+		m_graphics->Update(time, fov);
 	}
 
 	void ProcessInput()
@@ -130,32 +130,6 @@ public:
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(m_window->getWindow(), true);
-		}
-
-		//Translate and Rotate Object
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_UP) == GLFW_PRESS)
-		{
-			position.y++;
-		}
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
-		{
-			position.y--;
-		}
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT) == GLFW_PRESS)
-		{
-			position.x++;
-		}
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_RIGHT) == GLFW_PRESS)
-		{
-			position.x--;
-		}
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_P) == GLFW_PRESS)
-		{
-			rotation--;
-		}
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_O) == GLFW_PRESS)
-		{
-			rotation++;
 		}
 	}
 };
