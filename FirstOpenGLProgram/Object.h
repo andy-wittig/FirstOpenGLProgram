@@ -8,7 +8,6 @@
 class Object
 {
 private:
-
 	struct Vertex
 	{
 		glm::vec3 vertex;
@@ -131,6 +130,11 @@ public:
 	void setPosition(glm::vec3 position)
 	{
 		model = glm::translate(glm::mat4(1.0f), position);
+	}
+
+	glm::vec3 getPosition()
+	{
+		return model[3];
 	}
 
 	~Object()

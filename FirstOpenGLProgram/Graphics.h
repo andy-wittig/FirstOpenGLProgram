@@ -206,11 +206,11 @@ public:
 
 		//Light Properties
 		glUniform3fv(m_shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.05f, 0.05f, 0.05f)));
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.2f)));
+		glUniform3fv(m_shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(m_shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
 		glUniform3fv(m_shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_crystal->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
@@ -218,13 +218,21 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
 		glUniform1f(m_shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
 
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
 		glUniform1f(m_shader->GetUniformLocation("point_lights[1].constant"), 1.0f);
 		glUniform1f(m_shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
 		glUniform1f(m_shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
+
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
+		glUniform1f(m_shader->GetUniformLocation("point_lights[2].constant"), 1.0f);
+		glUniform1f(m_shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
+		glUniform1f(m_shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
 
 		//Object Rendering
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
@@ -324,6 +332,7 @@ public:
 
 		//cube transform
 		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 6.f, 0.0f, 6.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//crystal transform
