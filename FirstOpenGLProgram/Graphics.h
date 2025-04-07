@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Object.h"
 #include "Light.h"
+#include "Cube_Map.h"
 #include "Shader.h"
 
 std::string processShaderFile(const std::string& shader_file_name)
@@ -31,6 +32,7 @@ private:
 	Camera* m_camera;
 	Shader* m_shader;
 	Shader* m_light_shader;
+	Shader* m_skybox_shader;
 
 	Object* m_quad;
 	Object* m_cube;
@@ -41,6 +43,8 @@ private:
 	Light* m_point_light2;
 	Light* m_dir_light;
 
+	CubeMap* m_skybox;
+
 	GLint m_modelMatrix;
 	GLint m_projectionMatrix;
 	GLint m_viewMatrix;
@@ -48,6 +52,9 @@ private:
 	GLint m_lightModelMatrix;
 	GLint m_lightProjectionMatrix;
 	GLint m_lightViewMatrix;
+
+	GLint m_skyboxProjectionMatrix;
+	GLint m_skyboxViewMatrix;
 
 	glm::mat4 tmat;
 	glm::mat4 rmat;
@@ -79,6 +86,7 @@ public:
 		//Initialize Shaders
 		m_shader = new Shader();
 		m_light_shader = new Shader();
+		m_skybox_shader = new Shader();
 
 		if (!m_shader->Initialize())
 		{
@@ -88,6 +96,11 @@ public:
 		if (!m_light_shader->Initialize())
 		{
 			std::cerr << "Error: Light Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_skybox_shader->Initialize())
+		{
+			std::cerr << "Error: Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 
@@ -101,6 +114,12 @@ public:
 			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_skybox_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_cube_map_shader_source.txt").c_str()))
+		{
+			std::cerr << "Error: Vertex Cube Map Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+
 		if (!m_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
@@ -109,6 +128,11 @@ public:
 		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_skybox_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_cube_map_shader_source.txt").c_str()))
+		{
+			std::cerr << "Error: Fragment Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 		
@@ -120,6 +144,11 @@ public:
 		if (!m_light_shader->Finalize())
 		{
 			std::cerr << "Error: Light Shader Program Failed to Finialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_skybox_shader->Finalize())
+		{
+			std::cerr << "Error: Cube Map Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 
@@ -181,6 +210,22 @@ public:
 		m_lightProjectionMatrix = m_light_shader->GetUniformLocation("projectionMatrix");
 		m_lightViewMatrix = m_light_shader->GetUniformLocation("viewMatrix");
 		m_lightModelMatrix = m_light_shader->GetUniformLocation("modelMatrix");
+
+		//Initialize Cube Maps
+		m_skybox = new CubeMap();
+		std::vector<std::string> sky_box_faces = 
+		{ 
+			"skybox/right.png",
+			"skybox/left.png",
+			"skybox/top.png",
+			"skybox/bottom.png",
+			"skybox/front.png",
+			"skybox/back.png"
+		};
+		m_skybox->Initialize("skybox.txt", sky_box_faces);
+
+		m_skyboxProjectionMatrix = m_skybox_shader->GetUniformLocation("projectionMatrix");
+		m_skyboxViewMatrix = m_skybox_shader->GetUniformLocation("viewMatrix");
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
@@ -262,6 +307,14 @@ public:
 		m_point_light1->Render();
 		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
 		m_point_light2->Render();
+
+		//Render Cube Map
+		glDepthFunc(GL_LEQUAL);
+		m_skybox_shader->Enable();
+		glUniformMatrix4fv(m_skyboxProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_skyboxViewMatrix, 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
+		m_skybox->Render();
+		glDepthFunc(GL_LESS);
 
 		auto error = glGetError();
 		if (error != GL_NO_ERROR)

@@ -53,6 +53,9 @@
     <ClInclude Include="Main_Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Cube_Map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="v_shader_source.txt">
@@ -80,6 +83,15 @@
       <Filter>Source Files\models</Filter>
     </Text>
     <Text Include="crystal.txt">
+      <Filter>Source Files\models</Filter>
+    </Text>
+    <Text Include="f_cube_map_shader_source.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="v_cube_map_shader_source.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="skybox.txt">
       <Filter>Source Files\models</Filter>
     </Text>
   </ItemGroup>
