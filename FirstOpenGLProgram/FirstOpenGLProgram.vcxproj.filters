@@ -73,9 +73,6 @@
     <Text Include="quad.txt">
       <Filter>Source Files\models</Filter>
     </Text>
-    <Text Include="light_cube.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
     <Text Include="cube.txt">
       <Filter>Source Files\models</Filter>
     </Text>
@@ -92,6 +89,9 @@
       <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="skybox.txt">
+      <Filter>Source Files\models</Filter>
+    </Text>
+    <Text Include="lightbulb.txt">
       <Filter>Source Files\models</Filter>
     </Text>
   </ItemGroup>

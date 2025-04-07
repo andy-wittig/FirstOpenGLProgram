@@ -37,10 +37,6 @@ public:
 		glGenBuffers(1, &IB);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
-
-		//Compute Model Matrix
-		model = glm::translate(glm::mat4(1.0f), world_origin);
-		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
 	void Render()

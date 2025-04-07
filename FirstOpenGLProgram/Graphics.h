@@ -158,10 +158,10 @@ public:
 		m_pyramid = new Object();
 		m_crystal = new Object();
 
-		m_quad->Initialize("quad.txt", "wood_floor.png", "wood_floor_specular_map.png");
-		m_cube->Initialize("cube.txt", "crate.png", "crate_specular_map.png");
-		m_pyramid->Initialize("pyramid.txt", "pyramid.png", "pyramid_specular_map.png");
-		m_crystal->Initialize("crystal.txt", "crystal.png", "crystal_specular_map.png");
+		m_quad->Initialize("quad.txt", "textures/wood_floor.png", "textures/wood_floor_specular_map.png");
+		m_cube->Initialize("cube.txt", "textures/crate.png", "textures/crate_specular_map.png");
+		m_pyramid->Initialize("pyramid.txt", "textures/pyramid.png", "textures/pyramid_specular_map.png");
+		m_crystal->Initialize("crystal.txt", "textures/crystal.png", "textures/crystal_specular_map.png");
 
 		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
 		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
@@ -200,12 +200,17 @@ public:
 		m_point_light2 = new Light();
 		m_dir_light = new Light();
 
-		m_point_light1->Initialize("light_cube.txt");
+		m_point_light1->Initialize("lightbulb.txt");
 		m_point_light1->setPosition(glm::vec3(-8.f, 0.f, 0.f));
-		m_point_light2->Initialize("light_cube.txt");
+		m_point_light1->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
+
+		m_point_light2->Initialize("lightbulb.txt");
 		m_point_light2->setPosition(glm::vec3(8.f, 0.f, 0.f));
-		m_dir_light->Initialize("light_cube.txt");
+		m_point_light2->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
+
+		m_dir_light->Initialize("lightbulb.txt");
 		m_dir_light->setPosition(glm::vec3(0.f, 10.f, 0.f));
+		m_dir_light->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_lightProjectionMatrix = m_light_shader->GetUniformLocation("projectionMatrix");
 		m_lightViewMatrix = m_light_shader->GetUniformLocation("viewMatrix");
@@ -294,6 +299,7 @@ public:
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 125.0f);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
+		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 0.75);
 		m_crystal->Render();
 
 		//Render Light Models

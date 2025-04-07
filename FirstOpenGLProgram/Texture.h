@@ -32,6 +32,7 @@ public:
 		glGenTextures(1, &texture);
 
 		stbi_set_flip_vertically_on_load(true);
+		//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 		//Load Texture
 		unsigned char* data = stbi_load(texture_path, &width, &height, &nr_color_channels, 3);

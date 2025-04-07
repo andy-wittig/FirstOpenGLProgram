@@ -28,10 +28,10 @@ public:
 		screen_height = h;
 
 		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
-		projection = glm::perspective(  glm::radians(60.f), //Field of View
+		projection = glm::perspective(  glm::radians(90.f), //Field of View
 										float(w) / float(h), //aspect ratio
 										0.01f, //distance to near plane
-										100.0f); //distance to far plane
+										255.0f); //distance to far plane
 		return true;
 	}
 

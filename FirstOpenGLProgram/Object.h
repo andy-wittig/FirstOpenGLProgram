@@ -132,6 +132,11 @@ public:
 		model = glm::translate(glm::mat4(1.0f), position);
 	}
 
+	void setScale(glm::vec3 scale)
+	{
+		model *= glm::scale(scale);
+	}
+
 	glm::vec3 getPosition()
 	{
 		return model[3];
