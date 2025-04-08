@@ -17,7 +17,7 @@ private:
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
-	const float CAMERA_SPEED = 0.8f;
+	const float CAMERA_SPEED = 0.1f;
 	float camera_speed;
 	float mouse_sensitivity = 100.0f;
 

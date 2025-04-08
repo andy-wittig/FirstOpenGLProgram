@@ -6,7 +6,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 
-unsigned int TextureFromFile(const char* texture_path, const std::string& directory, bool gamma = false);
+unsigned int TextureFromFile(const char* texture_path, const std::string &directory, bool gamma = false);
 
 class Model
 {
@@ -16,20 +16,33 @@ public:
 	std::string directory;
 	bool gammaCorrection;
 
-	Model(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
+	Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma)
 	{
 		loadModel(path);
+
+		model = glm::translate(glm::mat4(1.0f), origin);
+		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
-	void Draw(Shader &shader)
+	void Render(Shader &shader)
 	{
 		for (unsigned int i = 0; i < meshes.size(); i++)
 		{
-			meshes[i].Draw(shader);
+			meshes[i].Render(shader);
 		}
 	}
 
+	glm::mat4 getModel()
+	{
+		return model;
+	}
+
 private:
+	//Variables
+	glm::mat4 model = glm::mat4(1.f);
+	glm::vec3 origin = glm::vec3(0.f, 0.f, 0.f);
+
+	//Functions
 	void loadModel(std::string const &model_path)
 	{
 		Assimp::Importer importer; //Read model file using ASSIMP
@@ -45,7 +58,7 @@ private:
 		processNode(scene->mRootNode, scene);
 	}
 
-	void processNode(aiNode* node, const aiScene* scene)
+	void processNode(aiNode *node, const aiScene *scene)
 	{
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
@@ -59,7 +72,7 @@ private:
 		}
 	}
 
-	Mesh processMesh(aiMesh * mesh, const aiScene * scene)
+	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
@@ -109,7 +122,6 @@ private:
 			{
 				vertex.tex_coords = glm::vec2(0.f, 0.f);
 			}
-
 			vertices.push_back(vertex);
 		}
 
@@ -126,19 +138,19 @@ private:
 
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		//diffuse maps
+		//Diffuse maps
 		std::vector<Model_Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 			
-		//specular maps
+		//Specular maps
 		std::vector<Model_Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 			
-		//normal maps
+		//Normal maps
 		std::vector<Model_Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 
-		//height maps
+		//Height maps
 		std::vector<Model_Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 

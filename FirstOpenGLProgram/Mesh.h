@@ -24,26 +24,39 @@ struct Model_Texture
 	std::string path;
 };
 
-
 class Mesh
 {
 private:
-	unsigned int VBO, EBO;
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
+	std::vector<Model_Texture> textures;
 
-	void setupMesh()
+	unsigned int VB, IB;
+
+	void Initialize()
 	{
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
+		glGenBuffers(1, &VB);
+		glBindBuffer(GL_ARRAY_BUFFER, VB);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glGenBuffers(1, &IB);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);
+	}
+	
 
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+public:
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Model_Texture> textures)
+	{
+		this->vertices = vertices;
+		this->indices = indices;
+		this->textures = textures;
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
+		Initialize();
+	}
+	
+	void Render(Shader &shader)
+	{
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
@@ -51,6 +64,9 @@ private:
 		glEnableVertexAttribArray(4);
 		glEnableVertexAttribArray(5);
 		glEnableVertexAttribArray(6);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VB);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
@@ -60,32 +76,8 @@ private:
 		glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
 		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
 
-		glBindVertexArray(0);
-	}
-	
-
-public:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	std::vector<Model_Texture> textures;
-	unsigned int VAO;
-
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Model_Texture> textures)
-	{
-		this->vertices = vertices;
-		this->indices = indices;
-		this->textures = textures;
-
-		setupMesh();
-	}
-	
-	void Draw(Shader &shader)
-	{
-		// bind appropriate textures
-		unsigned int diffuseNr = 1;
-		unsigned int specularNr = 1;
-		unsigned int normalNr = 1;
-		unsigned int heightNr = 1;
+		//Bind appropriate textures
+		unsigned int diffuse_n = 1, specular_n = 1, normal_n = 1, height_n = 1;
 
 		for (unsigned int i = 0; i < textures.size(); i++)
 		{
@@ -94,31 +86,24 @@ public:
 			std::string number;
 			std::string name = textures[i].type;
 
-			if (name == "texture_diffuse")
-			{
-				number = std::to_string(diffuseNr++);
-			}
-			else if (name == "texture_specular")
-			{
-				number = std::to_string(specularNr++);
-			}
-			else if (name == "texture_normal")
-			{
-				number = std::to_string(normalNr++);
-			}
-			else if (name == "texture_height")
-			{
-				number = std::to_string(heightNr++);
-			}
+			if (name == "texture_diffuse") { number = std::to_string(diffuse_n++); }
+			else if (name == "texture_specular") { number = std::to_string(specular_n++); }
+			else if (name == "texture_normal") { number = std::to_string(normal_n++); }
+			else if (name == "texture_height") { number = std::to_string(height_n++); }
 
 			glUniform1i(glGetUniformLocation(shader.m_shaderProg, (name + number).c_str()), i);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
 
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(3);
+		glDisableVertexAttribArray(4);
+		glDisableVertexAttribArray(5);
+		glDisableVertexAttribArray(6);
 		glActiveTexture(GL_TEXTURE0);
 	}
 };

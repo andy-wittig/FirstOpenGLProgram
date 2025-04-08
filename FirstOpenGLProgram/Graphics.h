@@ -259,7 +259,7 @@ public:
 		m_skyboxViewMatrix = m_skybox_shader->GetUniformLocation("viewMatrix");
 
 		//Initialize Models
-		//m_model = new Model("backpack/backpack.obj");
+		m_model = new Model("backpack/backpack.obj");
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
@@ -276,15 +276,13 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Model Rendering
-		/*
 		m_model_shader->Enable();
+		glUniformMatrix4fv(m_model_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_model_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		glUniformMatrix4fv(m_model_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, &model[0][0]);
-		m_model->Draw(*m_model_shader);
-		*/
+		glUniformMatrix4fv(m_model_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_model->getModel()));
+		m_model->Render(*m_model_shader);
+		
 
 		m_shader->Enable();
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
