@@ -189,6 +189,11 @@ public:
 	{
 		return model;
 	}
+
+	void setPosition(glm::vec3 position)
+	{
+		model = glm::translate(glm::mat4(1.0f), position);
+	}
 };
 
 unsigned int TextureFromFile(const char* texture_path, const std::string &directory, bool gamma)

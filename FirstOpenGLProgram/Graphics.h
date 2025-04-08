@@ -216,6 +216,7 @@ public:
 
 		//Initialize Models
 		m_model = new Model("backpack/backpack.obj");
+		m_model->setPosition(glm::vec3(0.f, 2.f, -10.f));
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
