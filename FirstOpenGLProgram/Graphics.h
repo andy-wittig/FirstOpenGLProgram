@@ -33,7 +33,6 @@ private:
 	Camera* m_camera;
 
 	Shader* m_shader;
-	Shader* m_model_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 
@@ -49,17 +48,6 @@ private:
 	CubeMap* m_skybox;
 
 	Model* m_model;
-
-	GLint m_modelMatrix;
-	GLint m_projectionMatrix;
-	GLint m_viewMatrix;
-
-	GLint m_lightModelMatrix;
-	GLint m_lightProjectionMatrix;
-	GLint m_lightViewMatrix;
-
-	GLint m_skyboxProjectionMatrix;
-	GLint m_skyboxViewMatrix;
 
 	glm::mat4 tmat;
 	glm::mat4 rmat;
@@ -90,18 +78,12 @@ public:
 
 		//Initialize Shaders
 		m_shader = new Shader();
-		m_model_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
 
 		if (!m_shader->Initialize())
 		{
 			std::cerr << "Error: Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_model_shader->Initialize())
-		{
-			std::cerr << "Error: Model Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Initialize())
@@ -120,11 +102,6 @@ public:
 			std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-		if (!m_model_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_model_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Model Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
 		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
@@ -141,11 +118,6 @@ public:
 			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
-		if (!m_model_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_model_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Model Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
 		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
@@ -160,11 +132,6 @@ public:
 		if (!m_shader->Finalize()) 
 		{
 			std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_model_shader->Finalize())
-		{
-			std::cerr << "Error: Model Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Finalize())
@@ -188,10 +155,6 @@ public:
 		m_cube->Initialize("cube.txt", "textures/crate.png", "textures/crate_specular_map.png");
 		m_pyramid->Initialize("pyramid.txt", "textures/pyramid.png", "textures/pyramid_specular_map.png");
 		m_crystal->Initialize("crystal.txt", "textures/crystal.png", "textures/crystal_specular_map.png");
-
-		m_projectionMatrix = m_shader->GetUniformLocation("projectionMatrix");
-		m_viewMatrix = m_shader->GetUniformLocation("viewMatrix");
-		m_modelMatrix = m_shader->GetUniformLocation("modelMatrix");
 
 		//Random Object Positioning
 		srand(time(0)); //Update seed of random number generator based on current time.
@@ -238,10 +201,6 @@ public:
 		m_dir_light->setPosition(glm::vec3(0.f, 10.f, 0.f));
 		m_dir_light->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
-		m_lightProjectionMatrix = m_light_shader->GetUniformLocation("projectionMatrix");
-		m_lightViewMatrix = m_light_shader->GetUniformLocation("viewMatrix");
-		m_lightModelMatrix = m_light_shader->GetUniformLocation("modelMatrix");
-
 		//Initialize Cube Maps
 		m_skybox = new CubeMap();
 		std::vector<std::string> sky_box_faces = 
@@ -254,9 +213,6 @@ public:
 			"skybox/back.png"
 		};
 		m_skybox->Initialize("skybox.txt", sky_box_faces);
-
-		m_skyboxProjectionMatrix = m_skybox_shader->GetUniformLocation("projectionMatrix");
-		m_skyboxViewMatrix = m_skybox_shader->GetUniformLocation("viewMatrix");
 
 		//Initialize Models
 		m_model = new Model("backpack/backpack.obj");
@@ -275,22 +231,14 @@ public:
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//Model Rendering
-		m_model_shader->Enable();
-		glUniformMatrix4fv(m_model_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_model_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-
-		glUniformMatrix4fv(m_model_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_model->getModel()));
-		m_model->Render(*m_model_shader);
-		
-
+		//Object Renderiing
 		m_shader->Enable();
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		glUniform1i(m_shader->GetUniformLocation("material.diffuse"), 0);
 		glUniform1i(m_shader->GetUniformLocation("material.specular"), 1);
 		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
-		glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
 		//Light Properties
 		glUniform3fv(m_shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
@@ -322,41 +270,43 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
 		glUniform1f(m_shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
 
-		//Object Rendering
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_model->getModel()));
+		m_model->Render(*m_shader);
+
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_quad->getModel()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_quad->getModel()));
 		m_quad->Render();
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 55.0f);
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
 		m_cube->Render();
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
 		m_pyramid->Render();
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 125.0f);
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
 		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 0.75);
 		m_crystal->Render();
 
 		//Render Light Models
 		m_light_shader->Enable();
-		glUniformMatrix4fv(m_lightProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_lightViewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
-		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
 		m_dir_light->Render();
-		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
 		m_point_light1->Render();
-		glUniformMatrix4fv(m_lightModelMatrix, 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
 		m_point_light2->Render();
 
 		//Render Cube Map
 		glDepthFunc(GL_LEQUAL);
 		m_skybox_shader->Enable();
-		glUniformMatrix4fv(m_skyboxProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_skyboxViewMatrix, 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
+		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
 		m_skybox->Render();
 		glDepthFunc(GL_LESS);
 

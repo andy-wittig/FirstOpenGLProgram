@@ -10,35 +10,13 @@ unsigned int TextureFromFile(const char* texture_path, const std::string &direct
 
 class Model
 {
-public:
+private:
+	//Variables
 	std::vector<Model_Texture> textures_loaded;
 	std::vector<Mesh> meshes;
 	std::string directory;
 	bool gammaCorrection;
 
-	Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma)
-	{
-		loadModel(path);
-
-		model = glm::translate(glm::mat4(1.0f), origin);
-		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-
-	void Render(Shader &shader)
-	{
-		for (unsigned int i = 0; i < meshes.size(); i++)
-		{
-			meshes[i].Render(shader);
-		}
-	}
-
-	glm::mat4 getModel()
-	{
-		return model;
-	}
-
-private:
-	//Variables
 	glm::mat4 model = glm::mat4(1.f);
 	glm::vec3 origin = glm::vec3(0.f, 0.f, 0.f);
 
@@ -48,7 +26,7 @@ private:
 		Assimp::Importer importer; //Read model file using ASSIMP
 		const aiScene* scene = importer.ReadFile(model_path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
-		if (!scene || scene->mFlags * AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
 			std::cout << "Error: ASSIMP:" << importer.GetErrorString() << std::endl;
 			return;
@@ -92,9 +70,9 @@ private:
 			//normals
 			if (mesh->HasNormals())
 			{
-				vector.x = mesh->mVertices[i].x;
-				vector.y = mesh->mVertices[i].y;
-				vector.z = mesh->mVertices[i].z;
+				vector.x = mesh->mNormals[i].x;
+				vector.y = mesh->mNormals[i].y;
+				vector.z = mesh->mNormals[i].z;
 				vertex.normal = vector;
 			}
 
@@ -141,11 +119,11 @@ private:
 		//Diffuse maps
 		std::vector<Model_Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-			
+		
 		//Specular maps
 		std::vector<Model_Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-			
+		
 		//Normal maps
 		std::vector<Model_Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
@@ -190,6 +168,27 @@ private:
 		}
 		return textures;
 	}
+public:
+	Model(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
+	{
+		loadModel(path);
+
+		model = glm::translate(glm::mat4(1.0f), origin);
+		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	void Render(Shader &shader)
+	{
+		for (unsigned int i = 0; i < meshes.size(); i++)
+		{
+			meshes[i].Render(shader);
+		}
+	}
+
+	glm::mat4 getModel()
+	{
+		return model;
+	}
 };
 
 unsigned int TextureFromFile(const char* texture_path, const std::string &directory, bool gamma)
@@ -200,17 +199,16 @@ unsigned int TextureFromFile(const char* texture_path, const std::string &direct
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
 
+	stbi_set_flip_vertically_on_load(true);
+
 	int width, height, nrComponents;
-	unsigned char* data = stbi_load(file_name.c_str(), &width, &height, &nrComponents, 0);
+	unsigned char *data = stbi_load(file_name.c_str(), &width, &height, &nrComponents, 0);
 	if (data)
 	{
 		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
+		if (nrComponents == 1) { format = GL_RED; }
+		else if (nrComponents == 3) { format = GL_RGB; }
+		else if (nrComponents == 4) { format = GL_RGBA; }
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
@@ -228,8 +226,6 @@ unsigned int TextureFromFile(const char* texture_path, const std::string &direct
 		std::cout << "Texture failed to load at path: " << texture_path << std::endl;
 		stbi_image_free(data);
 	}
-
 	return texture_id;
 }
-
 #endif

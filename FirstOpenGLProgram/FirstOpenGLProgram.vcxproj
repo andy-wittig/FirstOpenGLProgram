@@ -158,14 +158,12 @@
     <Text Include="crystal.txt" />
     <Text Include="cube.txt" />
     <Text Include="f_cube_map_shader_source.txt" />
-    <Text Include="f_model_shader_source.txt" />
     <Text Include="f_shader_source.txt" />
     <Text Include="pyramid.txt" />
     <Text Include="quad.txt" />
     <Text Include="f_light_shader_source.txt" />
     <Text Include="skybox.txt" />
     <Text Include="lightbulb.txt" />
-    <Text Include="v_model_shader_source.txt" />
     <Text Include="v_cube_map_shader_source.txt" />
     <Text Include="v_light_shader_source.txt" />
     <Text Include="v_shader_source.txt" />
