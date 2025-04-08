@@ -3,7 +3,6 @@
 #define TEXTURE_H
 
 #include "Main_Header.h"
-#include "stb_image.h"
 
 class Texture
 {

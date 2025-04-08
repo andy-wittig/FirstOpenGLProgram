@@ -8,9 +8,9 @@ class Shader
 {
 private:
 	std::vector<GLuint> m_shaderObjList;
+public:
 	GLuint m_shaderProg;
 
-public:
 	Shader()
 	{
 		m_shaderProg = 0; //Shader Program Default, not initialized yet.

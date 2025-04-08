@@ -8,6 +8,7 @@
 #include "Light.h"
 #include "Cube_Map.h"
 #include "Shader.h"
+#include "Model.h"
 
 std::string processShaderFile(const std::string& shader_file_name)
 {
@@ -30,7 +31,9 @@ class Graphics
 {
 private:
 	Camera* m_camera;
+
 	Shader* m_shader;
+	Shader* m_model_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 
@@ -44,6 +47,8 @@ private:
 	Light* m_dir_light;
 
 	CubeMap* m_skybox;
+
+	Model* m_model;
 
 	GLint m_modelMatrix;
 	GLint m_projectionMatrix;
@@ -85,12 +90,18 @@ public:
 
 		//Initialize Shaders
 		m_shader = new Shader();
+		m_model_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
 
 		if (!m_shader->Initialize())
 		{
 			std::cerr << "Error: Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_model_shader->Initialize())
+		{
+			std::cerr << "Error: Model Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Initialize())
@@ -109,6 +120,11 @@ public:
 			std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_model_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_model_shader_source.txt").c_str()))
+		{
+			std::cerr << "Error: Model Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
@@ -125,6 +141,11 @@ public:
 			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_model_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_model_shader_source.txt").c_str()))
+		{
+			std::cerr << "Error: Fragment Model Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
@@ -139,6 +160,11 @@ public:
 		if (!m_shader->Finalize()) 
 		{
 			std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_model_shader->Finalize())
+		{
+			std::cerr << "Error: Model Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Finalize())
@@ -232,6 +258,9 @@ public:
 		m_skyboxProjectionMatrix = m_skybox_shader->GetUniformLocation("projectionMatrix");
 		m_skyboxViewMatrix = m_skybox_shader->GetUniformLocation("viewMatrix");
 
+		//Initialize Models
+		//m_model = new Model("backpack/backpack.obj");
+
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
@@ -245,6 +274,17 @@ public:
 	{
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		//Model Rendering
+		/*
+		m_model_shader->Enable();
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		glUniformMatrix4fv(m_model_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, &model[0][0]);
+		m_model->Draw(*m_model_shader);
+		*/
 
 		m_shader->Enable();
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));

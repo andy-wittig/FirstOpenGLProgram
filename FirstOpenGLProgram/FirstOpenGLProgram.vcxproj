@@ -116,7 +116,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\OpenGLCodeLibraries\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glfw3.lib;soil2-debug.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;glfw3.lib;soil2-debug.lib;opengl32.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,6 +148,7 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="Main_Header.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
@@ -157,12 +158,14 @@
     <Text Include="crystal.txt" />
     <Text Include="cube.txt" />
     <Text Include="f_cube_map_shader_source.txt" />
+    <Text Include="f_model_shader_source.txt" />
     <Text Include="f_shader_source.txt" />
     <Text Include="pyramid.txt" />
     <Text Include="quad.txt" />
     <Text Include="f_light_shader_source.txt" />
     <Text Include="skybox.txt" />
     <Text Include="lightbulb.txt" />
+    <Text Include="v_model_shader_source.txt" />
     <Text Include="v_cube_map_shader_source.txt" />
     <Text Include="v_light_shader_source.txt" />
     <Text Include="v_shader_source.txt" />
