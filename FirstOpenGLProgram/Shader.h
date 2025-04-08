@@ -116,6 +116,17 @@ public:
 		glUseProgram(m_shaderProg);
 	}
 
+	GLuint getAttribuLocation(const char* attribute_name)
+	{
+		GLuint location = glGetAttribLocation(m_shaderProg, attribute_name);
+		if (location == -1)
+		{
+			std::cerr << "Error: Attribute Location Not Available!\n" << attribute_name << std::endl;
+		}
+
+		return location;
+	}
+
 	GLint GetUniformLocation(const char* uniform_name)
 	{
 		GLuint location = glGetUniformLocation(m_shaderProg, uniform_name);

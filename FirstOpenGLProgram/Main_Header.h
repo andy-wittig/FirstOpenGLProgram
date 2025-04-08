@@ -16,6 +16,10 @@
 #include <GLFW/glfw3.h>
 #include <GL/glu.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
