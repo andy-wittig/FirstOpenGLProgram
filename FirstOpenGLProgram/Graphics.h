@@ -48,6 +48,9 @@ private:
 	CubeMap* m_skybox;
 
 	Model* m_model;
+	glm::mat4 spaceship_tmat;
+	glm::mat4 spaceship_rmat;
+	glm::mat4 spaceship_smat;
 
 	glm::mat4 tmat;
 	glm::mat4 rmat;
@@ -215,7 +218,7 @@ public:
 		m_skybox->Initialize("skybox.txt", sky_box_faces);
 
 		//Initialize Models
-		m_model = new Model("backpack/backpack.obj");
+		m_model = new Model("models/carrier/carrier.obj");
 		m_model->setPosition(glm::vec3(0.f, 2.f, -10.f));
 
 		//GL Settings
@@ -373,6 +376,21 @@ public:
 	{ //Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
+
+		//Spaceship transform
+		double elapsed_time = glfwGetTime();
+		float speed = 0.5f;
+		float dist = 10.f;
+
+		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 8.f, sin(speed * elapsed_time) * dist);
+		glm::vec3 tangent = glm::normalize(glm::cross(direction, up));
+		float angle = glm::atan2(tangent.x, tangent.z);
+
+		spaceship_tmat = glm::translate(glm::mat4(1.f), direction);
+		spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
+		spaceship_smat = glm::scale(glm::vec3(.5f, .5f, .5f));
+		m_model->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
 		//pyramid transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);

@@ -185,6 +185,12 @@ public:
 		}
 	}
 
+	void Update(glm::mat4 model_transform)
+	{
+		model = model_transform;
+		//std::cout << glm::to_string(model) << std::endl;
+	}
+
 	glm::mat4 getModel()
 	{
 		return model;
@@ -204,7 +210,7 @@ unsigned int TextureFromFile(const char* texture_path, const std::string &direct
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
 
-	stbi_set_flip_vertically_on_load(true);
+	//stbi_set_flip_vertically_on_load(true);
 
 	int width, height, nrComponents;
 	unsigned char *data = stbi_load(file_name.c_str(), &width, &height, &nrComponents, 0);
