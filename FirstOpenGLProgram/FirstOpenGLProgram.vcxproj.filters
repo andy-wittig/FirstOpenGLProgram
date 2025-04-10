@@ -100,5 +100,8 @@
     <Text Include="lightbulb.txt">
       <Filter>Source Files\models</Filter>
     </Text>
+    <Text Include="v_instance_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

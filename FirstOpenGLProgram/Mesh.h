@@ -3,6 +3,7 @@
 #define MESH_H
 
 #include "Main_Header.h"
+#include "Shader.h"
 
 #define MAX_BONE_INFLUENCE 4
 
@@ -30,6 +31,7 @@ private:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Model_Texture> textures;
+	std::vector<glm::mat4> instanceMatrices;
 
 	unsigned int VB, IB;
 
@@ -45,11 +47,12 @@ private:
 	}
 
 public:
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Model_Texture> textures)
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Model_Texture> textures, std::vector<glm::mat4> instances)
 	{
 		this->vertices = vertices;
 		this->indices = indices;
 		this->textures = textures;
+		this->instanceMatrices = instances;
 
 		Initialize();
 	}
@@ -59,10 +62,6 @@ public:
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
-		//glEnableVertexAttribArray(3);
-		//glEnableVertexAttribArray(4);
-		//glEnableVertexAttribArray(5);
-		//glEnableVertexAttribArray(6);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
@@ -70,10 +69,6 @@ public:
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords));
-		//glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-		//glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangents));
-		//glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
-		//glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
 
 		//Bind appropriate textures
 		unsigned int diffuse_n = 1, specular_n = 1, normal_n = 1, height_n = 1;
@@ -93,15 +88,19 @@ public:
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
 
-		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		if (instanceMatrices.size() > 1)
+		{
+			glDrawElementsInstanced(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0, instanceMatrices.size());
+		}
+		else
+		{
+			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		}
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
-		//glDisableVertexAttribArray(3);
-		//glDisableVertexAttribArray(4);
-		//glDisableVertexAttribArray(5);
-		//glDisableVertexAttribArray(6);
+
 		glActiveTexture(GL_TEXTURE0);
 	}
 };

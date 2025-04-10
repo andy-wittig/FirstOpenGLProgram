@@ -33,6 +33,7 @@ private:
 	Camera* m_camera;
 
 	Shader* m_shader;
+	Shader* m_instance_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 
@@ -41,13 +42,14 @@ private:
 	Object* m_pyramid;
 	Object* m_crystal;
 
-	Light* m_point_light1;
-	Light* m_point_light2;
-	Light* m_dir_light;
+	Model* m_point_light1;
+	Model* m_point_light2;
+	Model* m_dir_light;
 
 	CubeMap* m_skybox;
 
 	Model* m_model;
+
 	glm::mat4 spaceship_tmat;
 	glm::mat4 spaceship_rmat;
 	glm::mat4 spaceship_smat;
@@ -58,6 +60,50 @@ private:
 	glm::mat4 t_offset;
 	glm::mat4 r_offset;
 	std::stack<glm::mat4> transformation_stack;
+
+	//Asteroids
+	static const int asteroid_amount = 10; //Vertex shader offset uniform array must match this size.
+	const float ASTEROID_RANGE = 10.f;
+	std::vector<glm::mat4> asteroidMatrices;
+	Model* m_asteroid;
+
+	void setShaderLights(Shader *shader)
+	{
+		glUniform3fv(shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
+		glUniform1i(shader->GetUniformLocation("material.diffuse"), 0);
+		glUniform1i(shader->GetUniformLocation("material.specular"), 1);
+		glUniform1f(shader->GetUniformLocation("material.alpha"), 1.0);
+
+		//Lights
+		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_crystal->getPosition()));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[0].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
+		glUniform1f(shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
+
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
+
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
+		glUniform1f(shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
+	}
 
 public:
 	bool Initialize(int width, int height)
@@ -81,12 +127,18 @@ public:
 
 		//Initialize Shaders
 		m_shader = new Shader();
+		m_instance_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
 
 		if (!m_shader->Initialize())
 		{
 			std::cerr << "Error: Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_instance_shader->Initialize())
+		{
+			std::cerr << "Error: Instance Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Initialize())
@@ -105,6 +157,11 @@ public:
 			std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_instance_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_instance_shader.txt").c_str()))
+		{
+			std::cerr << "Error: Vertex Instance Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
@@ -121,6 +178,11 @@ public:
 			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_instance_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
+		{
+			std::cerr << "Error: Fragment Instance Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
@@ -135,6 +197,11 @@ public:
 		if (!m_shader->Finalize()) 
 		{
 			std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_instance_shader->Finalize())
+		{
+			std::cerr << "Error: Instance Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_light_shader->Finalize())
@@ -161,6 +228,22 @@ public:
 
 		//Random Object Positioning
 		srand(time(0)); //Update seed of random number generator based on current time.
+
+		//Asteroid----------------------
+		for (int i = 0; i < asteroid_amount; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			glm::vec3 asteroid_translations = glm::vec3(
+				glm::linearRand(-ASTEROID_RANGE, ASTEROID_RANGE),
+				0.0f,
+				glm::linearRand(-ASTEROID_RANGE, ASTEROID_RANGE)
+			);
+			model = glm::translate(glm::mat4(1.f), asteroid_translations);
+			asteroidMatrices.push_back(model);
+		}
+		m_asteroid = new Model("models/carrier/carrier.obj", asteroidMatrices);
+		//------------------------------
+		
 		float angle = glm::linearRand(0.0f, 360.0f);
 		float tvec1 = glm::linearRand(-5.0f, 5.0f);
 		float tvec2 = glm::linearRand(1.0f, 5.0f);
@@ -188,19 +271,15 @@ public:
 		m_quad->setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
 
 		//Initialize Lights
-		m_point_light1 = new Light();
-		m_point_light2 = new Light();
-		m_dir_light = new Light();
-
-		m_point_light1->Initialize("lightbulb.txt");
+		m_point_light1 = new Model("models/lightbulb/lightbulb.obj");
 		m_point_light1->setPosition(glm::vec3(-8.f, 0.f, 0.f));
 		m_point_light1->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
-		m_point_light2->Initialize("lightbulb.txt");
+		m_point_light2 = new Model("models/lightbulb/lightbulb.obj");
 		m_point_light2->setPosition(glm::vec3(8.f, 0.f, 0.f));
 		m_point_light2->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
-		m_dir_light->Initialize("lightbulb.txt");
+		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
 		m_dir_light->setPosition(glm::vec3(0.f, 10.f, 0.f));
 		m_dir_light->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
@@ -237,42 +316,9 @@ public:
 
 		//Object Renderiing
 		m_shader->Enable();
-		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform1i(m_shader->GetUniformLocation("material.diffuse"), 0);
-		glUniform1i(m_shader->GetUniformLocation("material.specular"), 1);
-		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
+		setShaderLights(m_shader);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-
-		//Light Properties
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
-		glUniform3fv(m_shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
-
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_crystal->getPosition()));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(m_shader->GetUniformLocation("point_lights[0].constant"), 1.0f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
-
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(m_shader->GetUniformLocation("point_lights[1].constant"), 1.0f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
-
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(m_shader->GetUniformLocation("point_lights[2].constant"), 1.0f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
-		glUniform1f(m_shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
 
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_model->getModel()));
 		m_model->Render(*m_shader);
@@ -284,7 +330,7 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 55.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
 		m_cube->Render();
-
+		
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
 		m_pyramid->Render();
@@ -294,17 +340,29 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 0.75);
 		m_crystal->Render();
 
+		//Render Asteroids
+		m_instance_shader->Enable();
+		setShaderLights(m_instance_shader);
+		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		for (int i = 0; i < asteroidMatrices.size(); i++)
+		{
+			std::string uniform_name = "modelMatrix[" + std::to_string(i) + "]";
+			glUniformMatrix4fv(m_instance_shader->GetUniformLocation(uniform_name.c_str()), 1, GL_FALSE, glm::value_ptr(asteroidMatrices[i]));
+		}
+		m_asteroid->Render(*m_instance_shader);
+
 		//Render Light Models
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
-		m_dir_light->Render();
+		m_dir_light->Render(*m_light_shader);
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
-		m_point_light1->Render();
+		m_point_light1->Render(*m_light_shader);
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
-		m_point_light2->Render();
+		m_point_light2->Render(*m_light_shader);
 
 		//Render Cube Map
 		glDepthFunc(GL_LEQUAL);
@@ -358,6 +416,7 @@ public:
 	{
 		m_camera->MouseLook(x, y);
 	}
+
 	void MoveCameraForward() { m_camera->MoveForward(); }
 	void MoveCameraBackward() { m_camera->MoveBackward(); }
 	void MoveCameraLeft() { m_camera->MoveLeft(); }

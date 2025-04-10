@@ -16,6 +16,7 @@ private:
 	std::vector<Mesh> meshes;
 	std::string directory;
 	bool gammaCorrection;
+	std::vector<glm::mat4> instanceMatrices;
 
 	glm::mat4 model = glm::mat4(1.f);
 	glm::vec3 origin = glm::vec3(0.f, 0.f, 0.f);
@@ -133,7 +134,7 @@ private:
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
 		//Return a mesh object created from the extracted mesh data.
-		return Mesh(vertices, indices, textures);
+		return Mesh(vertices, indices, textures, instanceMatrices);
 	}
 
 	std::vector<Model_Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
@@ -169,12 +170,16 @@ private:
 		return textures;
 	}
 public:
-	Model(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
+	Model(std::string const& path, std::vector<glm::mat4> instances = {}, bool gamma = false) : instanceMatrices(instances), gammaCorrection(gamma)
 	{
-		loadModel(path);
+		if (instances.size() == 0)
+		{
+			model = glm::translate(glm::mat4(1.0f), origin);
+			model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+			instanceMatrices.push_back(model);
+		}
 
-		model = glm::translate(glm::mat4(1.0f), origin);
-		model *= glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+		loadModel(path);
 	}
 
 	void Render(Shader &shader)
@@ -196,9 +201,19 @@ public:
 		return model;
 	}
 
+	glm::vec3 getPosition()
+	{
+		return model[3];
+	}
+
 	void setPosition(glm::vec3 position)
 	{
 		model = glm::translate(glm::mat4(1.0f), position);
+	}
+
+	void setScale(glm::vec3 scale)
+	{
+		model *= glm::scale(scale);
 	}
 };
 

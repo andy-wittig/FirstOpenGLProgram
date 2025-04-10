@@ -165,6 +165,7 @@
     <Text Include="skybox.txt" />
     <Text Include="lightbulb.txt" />
     <Text Include="v_cube_map_shader_source.txt" />
+    <Text Include="v_instance_shader.txt" />
     <Text Include="v_light_shader_source.txt" />
     <Text Include="v_shader_source.txt" />
   </ItemGroup>
