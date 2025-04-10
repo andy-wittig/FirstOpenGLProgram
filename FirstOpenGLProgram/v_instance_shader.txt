@@ -3,6 +3,7 @@
 layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec3 v_normal;
 layout (location = 2) in vec2 v_tex_coords;
+layout (location = 3) in mat4 instanceMatrix;
 
 out vec3 frag_pos;
 out vec3 normal_pos;
@@ -10,12 +11,12 @@ out vec2 tex_coords;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
-uniform mat4 modelMatrix[650];
+//uniform mat4 modelMatrix[650];
 
 void main() 
 {
-	frag_pos = vec3(modelMatrix[gl_InstanceID] * vec4(v_position, 1.0));
-	normal_pos = mat3(transpose(inverse(modelMatrix[gl_InstanceID]))) * v_normal;
+	frag_pos = vec3(instanceMatrix * vec4(v_position, 1.0));
+	normal_pos = mat3(transpose(inverse(instanceMatrix))) * v_normal;
 	tex_coords = v_tex_coords; 
 
 	gl_Position = projectionMatrix * viewMatrix * vec4(frag_pos, 1.0);

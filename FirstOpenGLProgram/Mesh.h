@@ -33,7 +33,7 @@ private:
 	std::vector<Model_Texture> textures;
 	std::vector<glm::mat4> instanceMatrices;
 
-	unsigned int VB, IB, VAO;
+	unsigned int instanceVB, VB, IB, VAO;
 
 	void Initialize()
 	{
@@ -44,7 +44,6 @@ private:
 
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-		
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);
 
@@ -55,6 +54,21 @@ private:
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords));
+
+		if (instanceMatrices.size() > 1)
+		{
+			glGenBuffers(1, &instanceVB);
+			glBindBuffer(GL_ARRAY_BUFFER, instanceVB);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * instanceMatrices.size(), &instanceMatrices[0], GL_STATIC_DRAW);
+
+			for (int i = 0; i < 4; i++)
+			{
+				glEnableVertexAttribArray(3 + i);
+				glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec4), (void*)(sizeof(glm::vec4) * i));
+				glVertexAttribDivisor(3 + i, 1);
+			}
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
 
 		glBindVertexArray(0);
 	}

@@ -347,8 +347,8 @@ public:
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		for (int i = 0; i < asteroidMatrices.size(); i++)
 		{
-			std::string uniform_name = "modelMatrix[" + std::to_string(i) + "]";
-			glUniformMatrix4fv(m_instance_shader->GetUniformLocation(uniform_name.c_str()), 1, GL_FALSE, glm::value_ptr(asteroidMatrices[i]));
+			//std::string uniform_name = "modelMatrix[" + std::to_string(i) + "]";
+			//glUniformMatrix4fv(m_instance_shader->GetUniformLocation(uniform_name.c_str()), 1, GL_FALSE, glm::value_ptr(asteroidMatrices[i]));
 		}
 		m_asteroid->Render(*m_instance_shader);
 
