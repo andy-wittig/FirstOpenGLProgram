@@ -20,6 +20,7 @@ private:
 
 	GLuint VB;
 	GLuint IB;
+	GLuint VAO;
 
 	Texture* m_texture;
 	
@@ -31,16 +32,30 @@ public:
 	{ 
 
 		loadModel(object_file_path);
+		
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VB);
+		glGenBuffers(1, &IB);
+
+		glBindVertexArray(VAO);
 
 		//Vertex VBO
-		glGenBuffers(1, &VB);
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * Vertices.size(), &Vertices[0], GL_STATIC_DRAW);
 
 		//Index VBO
-		glGenBuffers(1, &IB);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
+
+		glBindVertexArray(0);
 
 		//Compute Model Matrix
 		model = glm::translate(glm::mat4(1.0f), world_origin);
@@ -53,23 +68,11 @@ public:
 
 	void Render()
 	{
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-
-		glBindBuffer(GL_ARRAY_BUFFER, VB);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coords));
-
+		glBindVertexArray(VAO);
 		m_texture->bindTextures();
-
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
 	}
 
 	void loadModel(const char* file_path)

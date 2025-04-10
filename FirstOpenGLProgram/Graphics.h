@@ -62,7 +62,7 @@ private:
 	std::stack<glm::mat4> transformation_stack;
 
 	//Asteroids
-	static const int asteroid_amount = 10; //Vertex shader offset uniform array must match this size.
+	static const int asteroid_amount = 650; //Vertex shader offset uniform array must match this size.
 	const float ASTEROID_RANGE = 10.f;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
@@ -241,7 +241,7 @@ public:
 			model = glm::translate(glm::mat4(1.f), asteroid_translations);
 			asteroidMatrices.push_back(model);
 		}
-		m_asteroid = new Model("models/carrier/carrier.obj", asteroidMatrices);
+		m_asteroid = new Model("models/lightbulb/lightbulb.obj", asteroidMatrices);
 		//------------------------------
 		
 		float angle = glm::linearRand(0.0f, 360.0f);

@@ -20,6 +20,7 @@ private:
 
 	GLuint skyboxVB;
 	GLuint skyboxIB;
+	GLuint VAO;
 
 	Texture* m_cube_map_texture;
 
@@ -28,15 +29,24 @@ public:
 	{
 		loadModel(object_file_path);
 
-		//Vertex VBO
+		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &skyboxVB);
+		glGenBuffers(1, &skyboxIB);
+
+		glBindVertexArray(VAO);
+
+		//Vertex VBO
 		glBindBuffer(GL_ARRAY_BUFFER, skyboxVB);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * Vertices.size(), &Vertices[0], GL_STATIC_DRAW);
 
 		//Index VBO
-		glGenBuffers(1, &skyboxIB);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxIB);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+		glBindVertexArray(0);
 
 		//Load Textures
 		m_cube_map_texture = new Texture();
@@ -45,17 +55,10 @@ public:
 
 	void Render()
 	{
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, skyboxVB);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxIB);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-
+		glBindVertexArray(VAO);
 		m_cube_map_texture->bindCubeMapTextures();
-
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
-
-		glDisableVertexAttribArray(0);
+		glBindVertexArray(0);
 	}
 
 	void loadModel(const char* file_path)
