@@ -86,8 +86,6 @@ public:
 	
 	void Render(Shader &shader)
 	{
-		glBindVertexArray(VAO);
-
 		//Bind appropriate textures
 		unsigned int diffuse_n = 1, specular_n = 1, normal_n = 1, height_n = 1;
 
@@ -101,10 +99,12 @@ public:
 			else if (name == "texture_normal") { number = std::to_string(normal_n++); }
 			else if (name == "texture_height") { number = std::to_string(height_n++); }
 
-			glUniform1i(glGetUniformLocation(shader.m_shaderProg, (name + number).c_str()), i);
+			glUniform1i(shader.GetUniformLocation((name + number).c_str()), i);
 			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
+
+		glBindVertexArray(VAO);
 
 		if (instanceMatrices.size() > 1)
 		{

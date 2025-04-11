@@ -62,7 +62,7 @@ private:
 	std::stack<glm::mat4> transformation_stack;
 
 	//Asteroids
-	static const int asteroid_amount = 650; //Vertex shader offset uniform array must match this size.
+	static const int asteroid_amount = 100; //Vertex shader offset uniform array must match this size.
 	const float ASTEROID_RANGE = 10.f;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
@@ -230,18 +230,35 @@ public:
 		srand(time(0)); //Update seed of random number generator based on current time.
 
 		//Asteroid----------------------
+		float radius = 25.0;
+		float offset = 2.f;
 		for (int i = 0; i < asteroid_amount; i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
-			glm::vec3 asteroid_translations = glm::vec3(
-				glm::linearRand(-ASTEROID_RANGE, ASTEROID_RANGE),
-				0.0f,
-				glm::linearRand(-ASTEROID_RANGE, ASTEROID_RANGE)
-			);
-			model = glm::translate(glm::mat4(1.f), asteroid_translations);
+
+			//Random Translation
+			float angle = (float)(i) / (float)(asteroid_amount) * 360.f;
+
+			float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+			float x = cos(angle) * radius + displacement;
+			displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+			float z = sin(angle) * radius + displacement;
+			displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+			float y = displacement * 0.1f;
+			
+			model = glm::translate(model, glm::vec3(x, y, z));
+
+			//Random Scale
+			float scale = (rand() % 6) / 10.f + 0.5f;
+			model = glm::scale(model, glm::vec3(scale));
+
+			//Random Rotation
+			float rotation_angle = (rand() % 361);
+			model = glm::rotate(model, rotation_angle, glm::vec3(0.f, 1.f, 0.f));
+
 			asteroidMatrices.push_back(model);
 		}
-		m_asteroid = new Model("models/lightbulb/lightbulb.obj", asteroidMatrices);
+		m_asteroid = new Model("models/asteroid/asteroid.obj", asteroidMatrices);
 		//------------------------------
 		
 		float angle = glm::linearRand(0.0f, 360.0f);
@@ -343,13 +360,9 @@ public:
 		//Render Asteroids
 		m_instance_shader->Enable();
 		setShaderLights(m_instance_shader);
+		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 10.f);
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		for (int i = 0; i < asteroidMatrices.size(); i++)
-		{
-			//std::string uniform_name = "modelMatrix[" + std::to_string(i) + "]";
-			//glUniformMatrix4fv(m_instance_shader->GetUniformLocation(uniform_name.c_str()), 1, GL_FALSE, glm::value_ptr(asteroidMatrices[i]));
-		}
 		m_asteroid->Render(*m_instance_shader);
 
 		//Render Light Models
@@ -438,8 +451,8 @@ public:
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
-		float speed = 0.5f;
-		float dist = 10.f;
+		float speed = 0.2f;
+		float dist = 15.f;
 
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
 		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 8.f, sin(speed * elapsed_time) * dist);
