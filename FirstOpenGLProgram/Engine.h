@@ -7,7 +7,7 @@
 #include "Graphics.h"
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-const float MAX_FOV = 60.0f;
+const float MAX_FOV = 80.0f;
 float fov = MAX_FOV;
 
 class Engine 

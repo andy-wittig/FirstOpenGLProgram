@@ -1,12 +1,15 @@
-# Blender 3.6.21 MTL File: 'None'
+# Blender 4.4.0 MTL File: 'asteroid.blend'
 # www.blender.org
 
 newmtl Material.002
-Ns 0.000000
-Ka 0.889764 0.889764 0.889764
-Ks 0.098425 0.098425 0.098425
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
-Ni 1.450000
+Ni 1.500000
 d 1.000000
-illum 3
-map_Kd asteroid.jpg
+illum 2
+map_Kd diffuse.jpg
+map_Bump -bm 1.000000 normal.png
+map_Ks specular.jpg
+

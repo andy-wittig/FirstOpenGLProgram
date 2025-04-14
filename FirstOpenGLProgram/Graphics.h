@@ -37,18 +37,17 @@ private:
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 
-	Object* m_quad;
-	Object* m_cube;
-	Object* m_pyramid;
 	Object* m_crystal;
 
 	Model* m_point_light1;
 	Model* m_point_light2;
 	Model* m_dir_light;
 
-	CubeMap* m_skybox;
+	Model* m_spaceship;
+	Model* m_sun;
+	Model* m_earth;
 
-	Model* m_model;
+	CubeMap* m_skybox;
 
 	glm::mat4 spaceship_tmat;
 	glm::mat4 spaceship_rmat;
@@ -61,26 +60,23 @@ private:
 	glm::mat4 r_offset;
 	std::stack<glm::mat4> transformation_stack;
 
-	//Asteroids
-	static const int asteroid_amount = 100; //Vertex shader offset uniform array must match this size.
-	const float ASTEROID_RANGE = 10.f;
+	//Asteroid Instance Variables
+	static const int asteroid_amount = 250;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
 
 	void setShaderLights(Shader *shader)
 	{
 		glUniform3fv(shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform1i(shader->GetUniformLocation("material.diffuse"), 0);
-		glUniform1i(shader->GetUniformLocation("material.specular"), 1);
 		glUniform1f(shader->GetUniformLocation("material.alpha"), 1.0);
 
 		//Lights
 		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.2f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 
-		glUniform3fv(shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_crystal->getPosition()));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_spaceship->getPosition()));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
@@ -194,7 +190,7 @@ public:
 			return false;
 		}
 		
-		if (!m_shader->Finalize()) 
+		if (!m_shader->Finalize())
 		{
 			std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
@@ -216,22 +212,15 @@ public:
 		}
 
 		//Initialize Objects
-		m_quad = new Object();
-		m_cube = new Object();
-		m_pyramid = new Object();
 		m_crystal = new Object();
 
-		m_quad->Initialize("quad.txt", "textures/wood_floor.png", "textures/wood_floor_specular_map.png");
-		m_cube->Initialize("cube.txt", "textures/crate.png", "textures/crate_specular_map.png");
-		m_pyramid->Initialize("pyramid.txt", "textures/pyramid.png", "textures/pyramid_specular_map.png");
 		m_crystal->Initialize("crystal.txt", "textures/crystal.png", "textures/crystal_specular_map.png");
 
-		//Random Object Positioning
 		srand(time(0)); //Update seed of random number generator based on current time.
 
-		//Asteroid----------------------
-		float radius = 25.0;
-		float offset = 2.f;
+		//-------------------- Asteroid
+		float radius = 75.0;
+		float offset = 14.f;
 		for (int i = 0; i < asteroid_amount; i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
@@ -259,8 +248,9 @@ public:
 			asteroidMatrices.push_back(model);
 		}
 		m_asteroid = new Model("models/asteroid/asteroid.obj", asteroidMatrices);
-		//------------------------------
+		//--------------------
 		
+		//-------------------- Solar System
 		float angle = glm::linearRand(0.0f, 360.0f);
 		float tvec1 = glm::linearRand(-5.0f, 5.0f);
 		float tvec2 = glm::linearRand(1.0f, 5.0f);
@@ -285,22 +275,25 @@ public:
 		t_offset = glm::translate(glm::mat4(1.f), glm::vec3(tvec1, tvec2, tvec3));
 		r_offset = glm::rotate(glm::mat4(1.0f), glm::radians(angle), axis);
 
-		m_quad->setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+		m_sun = new Model("models/Sun/Sun.obj");
+		m_earth = new Model("models/Earth/Earth.obj");
+		//--------------------
 
-		//Initialize Lights
+		//-------------------- Lights
 		m_point_light1 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light1->setPosition(glm::vec3(-8.f, 0.f, 0.f));
+		m_point_light1->setPosition(glm::vec3(-25.f, 0.f, 0.f));
 		m_point_light1->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_point_light2 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light2->setPosition(glm::vec3(8.f, 0.f, 0.f));
+		m_point_light2->setPosition(glm::vec3(25.f, 0.f, 0.f));
 		m_point_light2->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
-		m_dir_light->setPosition(glm::vec3(0.f, 10.f, 0.f));
+		m_dir_light->setPosition(glm::vec3(0.f, 35.f, 0.f));
 		m_dir_light->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
+		//--------------------
 
-		//Initialize Cube Maps
+		//-------------------- Cube Maps
 		m_skybox = new CubeMap();
 		std::vector<std::string> sky_box_faces = 
 		{ 
@@ -312,10 +305,11 @@ public:
 			"skybox/back.png"
 		};
 		m_skybox->Initialize("skybox.txt", sky_box_faces);
+		//--------------------
 
 		//Initialize Models
-		m_model = new Model("models/carrier/carrier.obj");
-		m_model->setPosition(glm::vec3(0.f, 2.f, -10.f));
+		m_spaceship = new Model("models/carrier/carrier.obj");
+		m_spaceship->setPosition(glm::vec3(0.f, 2.f, -10.f));
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
@@ -331,41 +325,41 @@ public:
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//Object Renderiing
+		//-------------------- Render Models
 		m_shader->Enable();
 		setShaderLights(m_shader);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_model->getModel()));
-		m_model->Render(*m_shader);
+		//Space Ship
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
+		m_spaceship->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_quad->getModel()));
-		m_quad->Render();
+		//Planets
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
+		m_sun->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 55.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_cube->getModel()));
-		m_cube->Render();
-		
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 75.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_pyramid->getModel()));
-		m_pyramid->Render();
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 25.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
+		m_earth->Render(*m_shader);
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 125.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
 		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 0.75);
 		m_crystal->Render();
+		//--------------------
 
-		//Render Asteroids
+		//-------------------- Render Instances
 		m_instance_shader->Enable();
 		setShaderLights(m_instance_shader);
-		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 10.f);
+		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 45.f);
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		m_asteroid->Render(*m_instance_shader);
+		//--------------------
 
-		//Render Light Models
+		//-------------------- Render Lights
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
@@ -376,7 +370,8 @@ public:
 		m_point_light1->Render(*m_light_shader);
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
 		m_point_light2->Render(*m_light_shader);
-
+		//--------------------
+		
 		//Render Cube Map
 		glDepthFunc(GL_LEQUAL);
 		m_skybox_shader->Enable();
@@ -451,8 +446,8 @@ public:
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
-		float speed = 0.2f;
-		float dist = 15.f;
+		float speed = 0.05f;
+		float dist = 75.f;
 
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
 		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 8.f, sin(speed * elapsed_time) * dist);
@@ -461,28 +456,28 @@ public:
 
 		spaceship_tmat = glm::translate(glm::mat4(1.f), direction);
 		spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
-		spaceship_smat = glm::scale(glm::vec3(.5f, .5f, .5f));
-		m_model->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
+		spaceship_smat = glm::scale(glm::vec3(.6f, .6f, .6f));
+		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
-		//pyramid transform
+		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
 
-		//cube transform
-		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 6.f, 0.0f, 6.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		//earth transform
+		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 25.f, 0.0f, 25.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
-		//crystal transform
+		//moon transform
 		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//Stack
 		m_crystal->Update(transformation_stack.top());
 		transformation_stack.pop();
-		m_cube->Update(transformation_stack.top());
+		m_earth->Update(transformation_stack.top());
 		transformation_stack.pop();
-		m_pyramid->Update(transformation_stack.top());
+		m_sun->Update(transformation_stack.top());
 		transformation_stack.pop();
 	}
 };

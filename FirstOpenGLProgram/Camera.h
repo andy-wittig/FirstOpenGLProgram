@@ -17,9 +17,12 @@ private:
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
-	const float CAMERA_SPEED = 0.1f;
+	const float CAMERA_SPEED = 0.2f;
 	float camera_speed;
 	float mouse_sensitivity = 100.0f;
+
+	float far_plane_dist = 500.f;
+	float near_plane_dist = 0.01f;
 
 public:
 	bool Initialize(int w, int h)
@@ -28,10 +31,7 @@ public:
 		screen_height = h;
 
 		view = glm::lookAt(camera_pos, camera_pos + orientation, up_dir);
-		projection = glm::perspective(  glm::radians(90.f), //Field of View
-										float(w) / float(h), //aspect ratio
-										0.01f, //distance to near plane
-										255.0f); //distance to far plane
+		projection = glm::perspective(glm::radians(80.f), float(w) / float(h), near_plane_dist, far_plane_dist);
 		return true;
 	}
 
@@ -92,7 +92,7 @@ public:
 
 	void setFOV(float fov_amount)
 	{
-		projection = glm::perspective(glm::radians(fov_amount), (float)screen_width / (float)screen_height, 0.01f, 100.0f);
+		projection = glm::perspective(glm::radians(fov_amount), (float)screen_width / (float)screen_height, near_plane_dist, far_plane_dist);
 	}
 
 };
