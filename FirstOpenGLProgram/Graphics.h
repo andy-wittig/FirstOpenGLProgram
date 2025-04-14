@@ -37,8 +37,6 @@ private:
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 
-	Object* m_crystal;
-
 	Model* m_point_light1;
 	Model* m_point_light2;
 	Model* m_dir_light;
@@ -46,6 +44,7 @@ private:
 	Model* m_spaceship;
 	Model* m_sun;
 	Model* m_earth;
+	Model* m_moon;
 
 	CubeMap* m_skybox;
 
@@ -77,16 +76,16 @@ private:
 		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_spaceship->getPosition()));
-		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(.1f, .1f, .1f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 10.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[0].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[0].constant"), 0.25f);
 		glUniform1f(shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
 		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.0f);
 		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
@@ -94,7 +93,7 @@ private:
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
 		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 1.0f);
 		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
@@ -211,11 +210,6 @@ public:
 			return false;
 		}
 
-		//Initialize Objects
-		m_crystal = new Object();
-
-		m_crystal->Initialize("crystal.txt", "textures/crystal.png", "textures/crystal_specular_map.png");
-
 		srand(time(0)); //Update seed of random number generator based on current time.
 
 		//-------------------- Asteroid
@@ -277,6 +271,7 @@ public:
 
 		m_sun = new Model("models/Sun/Sun.obj");
 		m_earth = new Model("models/Earth/Earth.obj");
+		m_moon = new Model("models/Moon/Moon.obj");
 		//--------------------
 
 		//-------------------- Lights
@@ -344,10 +339,9 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
 		m_earth->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 125.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_crystal->getModel()));
-		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 0.75);
-		m_crystal->Render();
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
+		m_moon->Render(*m_shader);
 		//--------------------
 
 		//-------------------- Render Instances
@@ -456,24 +450,24 @@ public:
 
 		spaceship_tmat = glm::translate(glm::mat4(1.f), direction);
 		spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
-		spaceship_smat = glm::scale(glm::vec3(.6f, .6f, .6f));
+		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
 		//sun transform
-		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
 
 		//earth transform
-		computeTransforms(dt, { 0.35f, 0.0f, 0.35f }, { 25.f, 0.0f, 25.0f }, { 0.25f, 0.0f, 0.25f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 25.f, 0.0f, 25.0f }, { 0.15f, 0.0f, 0.15f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//moon transform
-		computeTransforms(dt, { 1.f, 1.f, 0.f }, { 3.f, 3.f, 0.f }, { 0.25f, 0.0f, 0.25f }, { .25f, .25f, .25f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.5f, 0.5f, 0.f }, { 3.f, 3.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .3f, .3f, .3f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//Stack
-		m_crystal->Update(transformation_stack.top());
+		m_moon->Update(transformation_stack.top());
 		transformation_stack.pop();
 		m_earth->Update(transformation_stack.top());
 		transformation_stack.pop();
