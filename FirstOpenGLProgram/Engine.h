@@ -113,7 +113,7 @@ public:
 			glfwGetCursorPos(m_window->getWindow(), &x_pos, &y_pos);
 			glfwSetCursorPos(m_window->getWindow(), m_window->getWindowWidth() / 2, m_window->getWindowHeight() / 2);
 			
-			m_graphics->UpdateMousePos(x_pos, y_pos);
+			m_graphics->UpdateMousePos(x_pos, y_pos, delta_time);
 		}
 		else if (glfwGetMouseButton(m_window->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 		{

@@ -75,7 +75,10 @@ private:
 	Model* m_asteroid;
 
 	//Player Ship
-	const float ROLL_MAX = 15.f;
+	int screen_width;
+	int screen_height;
+
+	const float ROLL_MAX = 20.f;
 	const float ROLL_DECAY = .001;
 	float roll = 0.f;
 	float roll_speed = 0.1f;
@@ -117,6 +120,9 @@ private:
 public:
 	bool Initialize(int width, int height)
 	{
+		screen_width = width;
+		screen_height = height;
+
 		GLuint VAO;
 		GLuint light_VAO;
 
@@ -453,8 +459,30 @@ public:
 		}
 	}
 
-	void UpdateMousePos(double x, double y)
+	void UpdateMousePos(double x, double y, double dt)
 	{
+		if (x < screen_width / 2)
+		{
+			roll -= roll_speed * 0.5 * dt;
+			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+		}
+		else if (x > screen_width / 2)
+		{
+			roll += roll_speed * 0.5 * dt;
+			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+		}
+
+		if (y < screen_height / 2)
+		{
+			pitch += pitch_speed * 0.6 * dt;
+			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
+		}
+		else if (y > screen_height / 2)
+		{
+			pitch -= pitch_speed * 0.6 * dt;
+			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
+		}
+
 		m_camera->MouseLook(x, y);
 	}
 
