@@ -47,7 +47,7 @@ private:
 	Model* m_dir_light;
 
 	Model* m_spaceship;
-	Model* m_control_ship;
+	Model* m_player_ship;
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
@@ -78,12 +78,12 @@ private:
 	int screen_width;
 	int screen_height;
 
-	const float ROLL_MAX = 20.f;
+	const float ROLL_MAX = 30.f;
 	const float ROLL_DECAY = .001;
 	float roll = 0.f;
 	float roll_speed = 0.1f;
 
-	const float PITCH_MAX = 10.f;
+	const float PITCH_MAX = 15.f;
 	const float PITCH_DECAY = .005;
 	float pitch = 0.f;
 	float pitch_speed = 0.05f;
@@ -91,8 +91,8 @@ private:
 	void setShaderLights(Shader *shader)
 	{
 		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.2f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.12f, 0.12f, 0.12f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(.1f, .1f, .1f)));
@@ -326,7 +326,7 @@ public:
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_spaceship->setPosition(glm::vec3(0.f, 2.f, -10.f));
 
-		m_control_ship = new Model("models/carrier/carrier.obj");
+		m_player_ship = new Model("models/starship/starship.obj");
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
@@ -379,8 +379,8 @@ public:
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 10.0f);
 
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_control_ship->getModel()));
-		m_control_ship->Render(*m_shader);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
+		m_player_ship->Render(*m_shader);
 		//--------------------
 
 		//-------------------- Render Instances
@@ -536,8 +536,8 @@ public:
 		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
 		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
 		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-		glm::mat4 player_scale = glm::scale(glm::vec3(.25f, .25f, .25f));
-		m_control_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
+		glm::mat4 player_scale = glm::scale(glm::vec3(.06f, .06f, .06f));
+		m_player_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
