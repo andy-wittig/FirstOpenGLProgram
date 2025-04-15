@@ -121,10 +121,10 @@ public:
 			first_click = true;
 		}
 
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) { m_graphics->MoveCameraForward(); }
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_S) == GLFW_PRESS) { m_graphics->MoveCameraBackward(); }
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) { m_graphics->MoveCameraLeft(); }
-		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) { m_graphics->MoveCameraRight(); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) { m_graphics->MoveCameraForward(delta_time); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_S) == GLFW_PRESS) { m_graphics->MoveCameraBackward(delta_time); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) { m_graphics->MoveCameraLeft(delta_time); }
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) { m_graphics->MoveCameraRight(delta_time); }
 
 		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)

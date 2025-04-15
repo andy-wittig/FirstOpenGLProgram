@@ -10,6 +10,11 @@
 #include "Shader.h"
 #include "Model.h"
 
+float lerp(float start, float end, float f)
+{
+	return start * (1.0 - f) + (end * f);
+}
+
 std::string processShaderFile(const std::string& shader_file_name)
 {
 	std::ifstream shader_file(shader_file_name);
@@ -42,11 +47,16 @@ private:
 	Model* m_dir_light;
 
 	Model* m_spaceship;
+	Model* m_control_ship;
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
 
 	CubeMap* m_skybox;
+
+	glm::mat4 player_tmat;
+	glm::mat4 player_rmat;
+	glm::mat4 player_smat;
 
 	glm::mat4 spaceship_tmat;
 	glm::mat4 spaceship_rmat;
@@ -63,6 +73,17 @@ private:
 	static const int asteroid_amount = 250;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
+
+	//Player Ship
+	const float ROLL_MAX = 15.f;
+	const float ROLL_DECAY = .001;
+	float roll = 0.f;
+	float roll_speed = 0.1f;
+
+	const float PITCH_MAX = 10.f;
+	const float PITCH_DECAY = .005;
+	float pitch = 0.f;
+	float pitch_speed = 0.05f;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -299,6 +320,8 @@ public:
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_spaceship->setPosition(glm::vec3(0.f, 2.f, -10.f));
 
+		m_control_ship = new Model("models/carrier/carrier.obj");
+
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
@@ -336,17 +359,22 @@ public:
 		m_spaceship->Render(*m_shader);
 
 		//Planets
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 30.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
 		m_sun->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 25.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
 		m_earth->Render(*m_shader);
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
 		m_moon->Render(*m_shader);
+
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 10.0f);
+
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_control_ship->getModel()));
+		m_control_ship->Render(*m_shader);
 		//--------------------
 
 		//-------------------- Render Instances
@@ -430,10 +458,30 @@ public:
 		m_camera->MouseLook(x, y);
 	}
 
-	void MoveCameraForward() { m_camera->MoveForward(); }
-	void MoveCameraBackward() { m_camera->MoveBackward(); }
-	void MoveCameraLeft() { m_camera->MoveLeft(); }
-	void MoveCameraRight() { m_camera->MoveRight(); }
+	void MoveCameraForward(double dt)
+	{ 
+		m_camera->MoveForward();
+		pitch += pitch_speed * dt;
+		pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch)); //clamp
+	}
+	void MoveCameraBackward(double dt)
+	{
+		m_camera->MoveBackward();
+		pitch -= pitch_speed * dt;
+		pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
+	}
+	void MoveCameraLeft(double dt) 
+	{ 
+		m_camera->MoveLeft();
+		roll -= roll_speed * dt;
+		roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+	}
+	void MoveCameraRight(double dt)
+	{
+		m_camera->MoveRight();
+		roll += roll_speed * dt;
+		roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+	}
 
 	void computeTransforms(double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotation_speed, std::vector<float> scale,
 		glm::vec3 rotation_vector, glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
@@ -448,6 +496,20 @@ public:
 	{ //Objects transform should be updated here so different objects can move independently.
 		m_camera->UpdateTime(dt);
 		m_camera->setFOV(fov);
+
+		//Player Ship
+		if (abs(roll) < 0.001) { roll = 0; }
+		else { roll = lerp(roll, 0.f, ROLL_DECAY * dt); }
+
+		if (abs(pitch) < 0.001) { pitch = 0; }
+		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
+
+		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 4.f));
+		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
+		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
+		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
+		glm::mat4 player_scale = glm::scale(glm::vec3(.25f, .25f, .25f));
+		m_control_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();

@@ -79,6 +79,11 @@ public:
 		return camera_pos;
 	}
 
+	glm::vec3 getRotation()
+	{
+		return orientation;
+	}
+
 	glm::mat4 GetProjection()
 	{
 		return projection;
