@@ -70,7 +70,7 @@ private:
 	std::stack<glm::mat4> transformation_stack;
 
 	//Asteroid Instance Variables
-	static const int asteroid_amount = 250;
+	static const int asteroid_amount = 300;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
 
@@ -91,9 +91,9 @@ private:
 	void setShaderLights(Shader *shader)
 	{
 		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.12f, 0.12f, 0.12f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.08f, 0.08f, 0.08f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(.8f, .8f, .8f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(.1f, .1f, .1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 10.f)));
@@ -233,8 +233,8 @@ public:
 		srand(time(0)); //Update seed of random number generator based on current time.
 
 		//-------------------- Asteroid
-		float radius = 75.0;
-		float offset = 14.f;
+		float radius = 125.0;
+		float offset = 15.f;
 		for (int i = 0; i < asteroid_amount; i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
@@ -266,9 +266,9 @@ public:
 		
 		//-------------------- Solar System
 		float angle = glm::linearRand(0.0f, 360.0f);
-		float tvec1 = glm::linearRand(-5.0f, 5.0f);
-		float tvec2 = glm::linearRand(1.0f, 5.0f);
-		float tvec3 = glm::linearRand(-5.0f, 5.0f);
+		//float tvec1 = glm::linearRand(-5.0f, 5.0f);
+		//float tvec2 = glm::linearRand(1.0f, 5.0f);
+		//float tvec3 = glm::linearRand(-5.0f, 5.0f);
 
 		glm::vec3 axis;
 		int rand_axis_choice = rand() % 3; //Ranges from (0-2).
@@ -286,7 +286,7 @@ public:
 			break;
 		}
 
-		t_offset = glm::translate(glm::mat4(1.f), glm::vec3(tvec1, tvec2, tvec3));
+		t_offset = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, 0.f));
 		r_offset = glm::rotate(glm::mat4(1.0f), glm::radians(angle), axis);
 
 		m_sun = new Model("models/Sun/Sun.obj");
@@ -330,9 +330,12 @@ public:
 
 		//GL Settings
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDepthFunc(GL_LESS);
+
+		//glEnable(GL_FRAMEBUFFER_SRGB); //gamma correction
 
 		//Shader Light Settings
 		m_shader->Enable();
@@ -555,16 +558,16 @@ public:
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
 		//sun transform
-		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
 
 		//earth transform
-		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 25.f, 0.0f, 25.0f }, { 0.15f, 0.0f, 0.15f }, { 1.f, 1.f, 1.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 3.f, 3.f, 3.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//moon transform
-		computeTransforms(dt, { 0.5f, 0.5f, 0.f }, { 3.f, 3.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .3f, .3f, .3f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { 1.f, 1.f, 1.f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
 		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
 
 		//Stack
