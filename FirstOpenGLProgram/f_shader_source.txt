@@ -60,12 +60,8 @@ void main()
 	{
 		result += calcPointLight(point_lights[i], norm, frag_pos, view_dir);
 	}
-	//Result
-	frag_color = vec4(result, material.alpha); 
-
-	//Gamma Correction
-	float gamma = 1.4;
-	frag_color.rgb = pow(frag_color.rgb, vec3(1.0 / gamma));
+	
+	frag_color = vec4(result, material.alpha);
 }
 
 vec3 calcPointLight(pointLight light, vec3 normal, vec3 frag_pos, vec3 view_dir)

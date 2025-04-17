@@ -103,5 +103,11 @@
     <Text Include="v_instance_shader.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
+    <Text Include="v_hdr_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="f_hdr_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

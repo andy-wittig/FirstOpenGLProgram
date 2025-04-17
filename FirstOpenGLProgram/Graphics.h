@@ -32,6 +32,37 @@ std::string processShaderFile(const std::string& shader_file_name)
 	}
 }
 
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+	if (quadVAO == 0)
+	{
+		float quadVertices[] = {
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+}
+
 class Graphics
 {
 private:
@@ -41,6 +72,7 @@ private:
 	Shader* m_instance_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
+	Shader* m_hdr_shader;
 
 	Model* m_point_light1;
 	Model* m_point_light2;
@@ -68,6 +100,11 @@ private:
 	glm::mat4 t_offset;
 	glm::mat4 r_offset;
 	std::stack<glm::mat4> transformation_stack;
+
+	//Frame Buffers
+	unsigned int hdrFBO;
+	unsigned int colorBuffer;
+	unsigned int rboDepth;
 
 	//Asteroid Instance Variables
 	static const int asteroid_amount = 300;
@@ -145,6 +182,7 @@ public:
 		m_instance_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
+		m_hdr_shader = new Shader();
 
 		if (!m_shader->Initialize())
 		{
@@ -164,6 +202,11 @@ public:
 		if (!m_skybox_shader->Initialize())
 		{
 			std::cerr << "Error: Cube Map Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_hdr_shader->Initialize())
+		{
+			std::cerr << "Error: HDR Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 
@@ -187,6 +230,11 @@ public:
 			std::cerr << "Error: Vertex Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_hdr_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_hdr_shader.txt").c_str()))
+		{
+			std::cerr << "Error: Vertex HDR Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 
 		if (!m_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
 		{
@@ -208,6 +256,11 @@ public:
 			std::cerr << "Error: Fragment Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_hdr_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_hdr_shader.txt").c_str()))
+		{
+			std::cerr << "Error: Fragment HDR Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		
 		if (!m_shader->Finalize())
 		{
@@ -227,6 +280,11 @@ public:
 		if (!m_skybox_shader->Finalize())
 		{
 			std::cerr << "Error: Cube Map Shader Program Failed to Finialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_hdr_shader->Finalize())
+		{
+			std::cerr << "Error: HDR Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 
@@ -328,7 +386,7 @@ public:
 
 		m_player_ship = new Model("models/starship/starship.obj");
 
-		//GL Settings
+		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
@@ -337,11 +395,36 @@ public:
 
 		//glEnable(GL_FRAMEBUFFER_SRGB); //gamma correction
 
+		//-------------------- Frame Buffers
+		glGenFramebuffers(1, &hdrFBO);
+
+		glGenTextures(1, &colorBuffer);
+		glBindTexture(GL_TEXTURE_2D, colorBuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glGenRenderbuffers(1, &rboDepth);
+		glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screen_width, screen_height);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "Framebuffer not complete!" << std::endl;
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//--------------------
+
 		//Shader Light Settings
 		m_shader->Enable();
 		setShaderLights(m_shader);
 		m_instance_shader->Enable();
 		setShaderLights(m_instance_shader);
+		m_hdr_shader->Enable();
+		glUniform1i(m_hdr_shader->GetUniformLocation("hdrBuffer"), 0);
 
 		return true;
 	}
@@ -349,6 +432,9 @@ public:
 	void Render()
 	{
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//-------------------- Render Models
@@ -421,6 +507,15 @@ public:
 		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
 		m_skybox->Render();
 		glDepthFunc(GL_LESS);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		//HDR Rendering
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_hdr_shader->Enable();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, colorBuffer);
+		renderQuad();
 
 		auto error = glGetError();
 		if (error != GL_NO_ERROR)
