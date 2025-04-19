@@ -499,6 +499,7 @@ public:
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
 			glUniform1i(m_blur_shader->GetUniformLocation("horizontal"), horizontal);
+			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorBuffers[!horizontal]);
 			renderQuad();
 			horizontal = !horizontal;
