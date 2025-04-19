@@ -14,10 +14,12 @@ private:
 	glm::mat4 view;
 
 	glm::vec3 camera_pos = glm::vec3(0.0, 5.0, -8.0);
+	glm::vec3 velocity = glm::vec3(0.0);
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
-	const float CAMERA_SPEED = 0.025f;
+	const float CAMERA_SPEED = 0.0002f;
+	const float FRICTION = 0.002;
 	float camera_speed;
 	float mouse_sensitivity = 100.0f;
 
@@ -52,26 +54,41 @@ public:
 		orientation = glm::rotate(orientation, glm::radians(-rot_y), up_dir);
 	}
 
-	void UpdateTime(float dt)
+	float lerpSpeed(float start, float end, float f)
+	{
+		return start * (1.0 - f) + (end * f);
+	}
+
+	void Update(float dt)
 	{
 		camera_speed = CAMERA_SPEED * dt; //Delta time keeps the camera's speed consistent across machines.
+
+		if (glm::length(velocity) < 0.0001) { velocity = glm::vec3(0.0f); }
+		else 
+		{ 
+			velocity.x = lerpSpeed(velocity.x, 0.f, FRICTION * dt);
+			velocity.y = lerpSpeed(velocity.y, 0.f, FRICTION * dt);
+			velocity.z = lerpSpeed(velocity.z, 0.f, FRICTION * dt);
+		}
+
+		camera_pos += velocity * camera_speed;
 	}
 
 	void MoveForward()
 	{
-		camera_pos += camera_speed * orientation;
+		velocity += orientation;
 	}
 	void MoveBackward()
 	{
-		camera_pos -= camera_speed * orientation;
+		velocity -= orientation;
 	}
 	void MoveLeft()
 	{
-		camera_pos -= glm::normalize(glm::cross(orientation, up_dir)) * camera_speed;
+		velocity -= glm::normalize(glm::cross(orientation, up_dir));
 	}
 	void MoveRight()
 	{
-		camera_pos += glm::normalize(glm::cross(orientation, up_dir)) * camera_speed;
+		velocity += glm::normalize(glm::cross(orientation, up_dir));
 	}
 
 	glm::vec3 getPosition()
@@ -101,5 +118,4 @@ public:
 	}
 
 };
-
 #endif

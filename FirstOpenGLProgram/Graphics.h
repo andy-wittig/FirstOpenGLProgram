@@ -620,7 +620,7 @@ public:
 
 	void Update(double dt, float fov)
 	{ //Objects transform should be updated here so different objects can move independently.
-		m_camera->UpdateTime(dt);
+		m_camera->Update(dt);
 		m_camera->setFOV(fov);
 
 		//Player Ship
