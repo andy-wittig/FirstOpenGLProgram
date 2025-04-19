@@ -193,130 +193,41 @@ public:
 		m_blur_shader = new Shader;
 		m_hdr_shader = new Shader();
 
-		//******************** TODO: Make this into iterable for loop to reduce code size!
+		std::map<Shader*, std::pair<std::string, std::string>> shader_map
+		{
+			{m_shader, {"v_shader_source.txt", "f_shader_source.txt"}},
+			{m_instance_shader, {"v_instance_shader.txt", "f_shader_source.txt"}},
+			{m_light_shader, {"v_light_shader_source.txt", "f_light_shader_source.txt"}},
+			{m_skybox_shader, {"v_cube_map_shader_source.txt", "f_cube_map_shader_source.txt"}},
+			{m_blur_shader, {"v_hdr_shader.txt", "f_blur_shader.txt"}},
+			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}}
+		};
 
-		if (!m_shader->Initialize())
+		for (const auto& shader_entry : shader_map)
 		{
-			std::cerr << "Error: Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_instance_shader->Initialize())
-		{
-			std::cerr << "Error: Instance Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_light_shader->Initialize())
-		{
-			std::cerr << "Error: Light Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_skybox_shader->Initialize())
-		{
-			std::cerr << "Error: Cube Map Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_blur_shader->Initialize())
-		{
-			std::cerr << "Error: HDR Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_hdr_shader->Initialize())
-		{
-			std::cerr << "Error: HDR Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
+			Shader* target_shader = shader_entry.first;
+			const auto& shader_source = shader_entry.second;
 
-		if (!m_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_instance_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_instance_shader.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex Instance Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_light_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_light_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex Light Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_skybox_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_cube_map_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex Cube Map Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_blur_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_hdr_shader.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex Blur Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_hdr_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_hdr_shader.txt").c_str()))
-		{
-			std::cerr << "Error: Vertex HDR Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-
-		if (!m_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_instance_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Instance Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_light_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_light_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Light Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_skybox_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_cube_map_shader_source.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Cube Map Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_blur_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_blur_shader.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment Blur Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_hdr_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_hdr_shader.txt").c_str()))
-		{
-			std::cerr << "Error: Fragment HDR Shader Could Not Initialize!\n" << std::endl;
-			return false;
-		}
-		
-		if (!m_shader->Finalize())
-		{
-			std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_instance_shader->Finalize())
-		{
-			std::cerr << "Error: Instance Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_light_shader->Finalize())
-		{
-			std::cerr << "Error: Light Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_skybox_shader->Finalize())
-		{
-			std::cerr << "Error: Cube Map Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_blur_shader->Finalize())
-		{
-			std::cerr << "Error: Blur Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
-		}
-		if (!m_hdr_shader->Finalize())
-		{
-			std::cerr << "Error: HDR Shader Program Failed to Finialize!\n" << std::endl;
-			return false;
+			if (!target_shader->Initialize())
+			{
+				std::cerr << "Error: Shader Could Not Initialize!\n" << std::endl;
+				return false;
+			}
+			if (!target_shader->AddShader(GL_VERTEX_SHADER, processShaderFile(shader_source.first).c_str()))
+			{
+				std::cerr << "Error: Vertex Shader Could Not Initialize!\n" << std::endl;
+				return false;
+			}
+			if (!target_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile(shader_source.second).c_str()))
+			{
+				std::cerr << "Error: Fragment Shader Could Not Initialize!\n" << std::endl;
+				return false;
+			}
+			if (!target_shader->Finalize())
+			{
+				std::cerr << "Error: Shader Program Failed to Finialize!\n" << std::endl;
+				return false;
+			}
 		}
 
 		srand(time(0)); //Update seed of random number generator based on current time.
