@@ -109,5 +109,8 @@
     <Text Include="f_hdr_shader.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
+    <Text Include="f_blur_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -4,7 +4,8 @@ out vec4 frag_color;
 
 in vec2 tex_coords;
 
-uniform sampler2D hdrBuffer;
+uniform sampler2D scene;
+uniform sampler2D bloomBlur;
 
 void main()
 {
@@ -12,7 +13,10 @@ void main()
 	const float gamma = 1.2;
 	const float exposure = 0.8;
 
-	vec3 hdrColor = texture(hdrBuffer, tex_coords).rgb;
+	vec3 hdrColor = texture(scene, tex_coords).rgb;
+	vec3 bloomColor = texture(bloomBlur, tex_coords).rgb;
+
+	hdrColor += bloomColor;
 
 	vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
 	result = pow(result, vec3(1.0 / gamma));

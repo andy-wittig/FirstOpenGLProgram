@@ -68,16 +68,21 @@ class Graphics
 private:
 	Camera* m_camera;
 
+	//Shaders
 	Shader* m_shader;
 	Shader* m_instance_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
+	Shader* m_blur_shader;
 	Shader* m_hdr_shader;
 
+	//Light Models
+	Model* m_point_light0;
 	Model* m_point_light1;
 	Model* m_point_light2;
 	Model* m_dir_light;
 
+	//Scene Models
 	Model* m_spaceship;
 	Model* m_player_ship;
 	Model* m_sun;
@@ -86,6 +91,7 @@ private:
 
 	CubeMap* m_skybox;
 
+	//Transformations
 	glm::mat4 player_tmat;
 	glm::mat4 player_rmat;
 	glm::mat4 player_smat;
@@ -103,7 +109,9 @@ private:
 
 	//Frame Buffers
 	unsigned int hdrFBO;
-	unsigned int colorBuffer;
+	unsigned int pingpongFBO[2];
+	unsigned int colorBuffers[2];
+	unsigned int pingpongColorBuffers[2];
 	unsigned int rboDepth;
 
 	//Asteroid Instance Variables
@@ -121,7 +129,7 @@ private:
 	float roll_speed = 0.1f;
 
 	const float PITCH_MAX = 15.f;
-	const float PITCH_DECAY = .005;
+	const float PITCH_DECAY = .0025;
 	float pitch = 0.f;
 	float pitch_speed = 0.05f;
 
@@ -142,7 +150,7 @@ private:
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.f);
 		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
 
@@ -182,7 +190,10 @@ public:
 		m_instance_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
+		m_blur_shader = new Shader;
 		m_hdr_shader = new Shader();
+
+		//******************** TODO: Make this into iterable for loop to reduce code size!
 
 		if (!m_shader->Initialize())
 		{
@@ -202,6 +213,11 @@ public:
 		if (!m_skybox_shader->Initialize())
 		{
 			std::cerr << "Error: Cube Map Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_blur_shader->Initialize())
+		{
+			std::cerr << "Error: HDR Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_hdr_shader->Initialize())
@@ -230,6 +246,11 @@ public:
 			std::cerr << "Error: Vertex Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_blur_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_hdr_shader.txt").c_str()))
+		{
+			std::cerr << "Error: Vertex Blur Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_hdr_shader->AddShader(GL_VERTEX_SHADER, processShaderFile("v_hdr_shader.txt").c_str()))
 		{
 			std::cerr << "Error: Vertex HDR Shader Could Not Initialize!\n" << std::endl;
@@ -256,6 +277,11 @@ public:
 			std::cerr << "Error: Fragment Cube Map Shader Could Not Initialize!\n" << std::endl;
 			return false;
 		}
+		if (!m_blur_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_blur_shader.txt").c_str()))
+		{
+			std::cerr << "Error: Fragment Blur Shader Could Not Initialize!\n" << std::endl;
+			return false;
+		}
 		if (!m_hdr_shader->AddShader(GL_FRAGMENT_SHADER, processShaderFile("f_hdr_shader.txt").c_str()))
 		{
 			std::cerr << "Error: Fragment HDR Shader Could Not Initialize!\n" << std::endl;
@@ -280,6 +306,11 @@ public:
 		if (!m_skybox_shader->Finalize())
 		{
 			std::cerr << "Error: Cube Map Shader Program Failed to Finialize!\n" << std::endl;
+			return false;
+		}
+		if (!m_blur_shader->Finalize())
+		{
+			std::cerr << "Error: Blur Shader Program Failed to Finialize!\n" << std::endl;
 			return false;
 		}
 		if (!m_hdr_shader->Finalize())
@@ -353,12 +384,15 @@ public:
 		//--------------------
 
 		//-------------------- Lights
+		m_point_light0 = new Model("models/lightbulb/lightbulb.obj");
+		m_point_light0->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
+
 		m_point_light1 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light1->setPosition(glm::vec3(-25.f, 0.f, 0.f));
+		m_point_light1->setPosition(glm::vec3(-50.f, 0.f, 0.f));
 		m_point_light1->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_point_light2 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light2->setPosition(glm::vec3(25.f, 0.f, 0.f));
+		m_point_light2->setPosition(glm::vec3(50.f, 0.f, 0.f));
 		m_point_light2->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
@@ -393,38 +427,70 @@ public:
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		//glEnable(GL_FRAMEBUFFER_SRGB); //gamma correction
-
 		//-------------------- Frame Buffers
 		glGenFramebuffers(1, &hdrFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+		glGenTextures(2, colorBuffers);
 
-		glGenTextures(1, &colorBuffer);
-		glBindTexture(GL_TEXTURE_2D, colorBuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+		}
 
 		glGenRenderbuffers(1, &rboDepth);
 		glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screen_width, screen_height);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+		unsigned int attachements[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, attachements);
+
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		{
 			std::cout << "Framebuffer not complete!" << std::endl;
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		//Blurring Frame Buffer
+		glGenFramebuffers(2, pingpongFBO);
+		glGenTextures(2, pingpongColorBuffers);
+
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+			glBindTexture(GL_TEXTURE_2D, pingpongColorBuffers[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorBuffers[i], 0);
+
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			{
+				std::cout << "Blur Framebuffer not complete!" << std::endl;
+			}
+		}
 		//--------------------
 
 		//Shader Light Settings
 		m_shader->Enable();
 		setShaderLights(m_shader);
+
 		m_instance_shader->Enable();
 		setShaderLights(m_instance_shader);
+
+		m_blur_shader->Enable();
+		glUniform1i(m_blur_shader->GetUniformLocation("image"), 0);
+
 		m_hdr_shader->Enable();
-		glUniform1i(m_hdr_shader->GetUniformLocation("hdrBuffer"), 0);
+		glUniform1i(m_hdr_shader->GetUniformLocation("scene"), 0);
+		glUniform1i(m_hdr_shader->GetUniformLocation("bloomBlur"), 1);
 
 		return true;
 	}
@@ -441,7 +507,7 @@ public:
 		m_shader->Enable();
 		
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_spaceship->getPosition()));
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
 		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
@@ -476,7 +542,7 @@ public:
 		m_instance_shader->Enable();
 
 		glUniform3fv(m_instance_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_spaceship->getPosition()));
+		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
 		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
 		glUniform1f(m_instance_shader->GetUniformLocation("material.alpha"), 1.0);
@@ -494,6 +560,8 @@ public:
 
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
 		m_dir_light->Render(*m_light_shader);
+		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light0->getModel()));
+		//m_point_light0->Render(*m_light_shader);
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
 		m_point_light1->Render(*m_light_shader);
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
@@ -510,11 +578,31 @@ public:
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		//Two-pass Gaussian blur
+		bool horizontal = true;
+		bool first_iteration = true;
+		unsigned int amount = 10;
+
+		m_blur_shader->Enable();
+		for (unsigned int i = 0; i < amount; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+			glUniform1i(m_blur_shader->GetUniformLocation("horizontal"), horizontal);
+			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorBuffers[!horizontal]);
+			renderQuad();
+			horizontal = !horizontal;
+			if (first_iteration) { first_iteration = false; }
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 		//HDR Rendering
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_hdr_shader->Enable();
+
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, colorBuffer);
+		glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, pingpongColorBuffers[!horizontal]);
 		renderQuad();
 
 		auto error = glGetError();
@@ -643,7 +731,7 @@ public:
 		float dist = 75.f;
 
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
-		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 8.f, sin(speed * elapsed_time) * dist);
+		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 0.f, sin(speed * elapsed_time) * dist);
 		glm::vec3 tangent = glm::normalize(glm::cross(direction, up));
 		float angle = glm::atan2(tangent.x, tangent.z);
 
@@ -651,6 +739,10 @@ public:
 		spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
 		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
+
+		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .06f) * dist, 0.f, sin(speed * elapsed_time - .06f) * dist); //Light trails behind spaceship
+		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
+		m_point_light0->Update(light0_tmat);
 
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
