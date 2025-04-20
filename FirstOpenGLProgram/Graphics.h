@@ -88,7 +88,6 @@ private:
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
-	Model* m_ISS;
 
 	CubeMap* m_skybox;
 
@@ -327,7 +326,6 @@ public:
 		//--------------------
 
 		//Initialize Models
-		m_ISS = new Model("models/ISS/ISS.obj");
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_player_ship = new Model("models/starship/starship.obj");
 
@@ -429,10 +427,6 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
 		//Ships
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_ISS->getModel()));
-		m_ISS->Render(*m_shader);
-
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
 		m_spaceship->Render(*m_shader);

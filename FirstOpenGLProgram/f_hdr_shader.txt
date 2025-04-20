@@ -11,7 +11,7 @@ void main()
 {
 	//HDR and Gamma Correction
 	const float gamma = 1.0;
-	const float exposure = 0.8;
+	const float exposure = 0.6;
 
 	vec3 hdrColor = texture(scene, tex_coords).rgb;
 	vec3 bloomColor = texture(bloomBlur, tex_coords).rgb;
