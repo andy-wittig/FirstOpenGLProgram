@@ -10,4 +10,5 @@ Ni 1.500000
 d 1.000000
 illum 3
 map_Kd diffuse.jpg
+map_Ke emission.jpg
 map_Bump -bm 0.800000 normal.png

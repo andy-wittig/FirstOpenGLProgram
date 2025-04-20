@@ -103,6 +103,7 @@ public:
 			else if (name == "texture_specular") { number = std::to_string(specular_n++); }
 			else if (name == "texture_normal") { number = std::to_string(normal_n++); }
 			else if (name == "texture_height") { number = std::to_string(height_n++); }
+			else if (name == "texture_emission") { number = std::to_string(height_n++); }
 
 			glUniform1i(shader.GetUniformLocation(("material." + name + number).c_str()), i);
 			glActiveTexture(GL_TEXTURE0 + i);

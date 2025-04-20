@@ -133,6 +133,13 @@ private:
 		std::vector<Model_Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
+		//Emission maps
+		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
+		{
+			std::vector<Model_Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
+			textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
+		}
+
 		//Return a mesh object created from the extracted mesh data.
 		return Mesh(vertices, indices, textures, instanceMatrices);
 	}

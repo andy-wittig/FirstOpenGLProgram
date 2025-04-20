@@ -8,6 +8,7 @@ struct Material
 	sampler2D texture_diffuse1;
 	sampler2D texture_specular1;
 	sampler2D texture_normal1;
+	sampler2D texture_emission1;
 	float shininess;
 	float alpha;
 };
@@ -41,6 +42,7 @@ uniform Material material;
 uniform dirLight dir_light;
 uniform pointLight point_lights[NR_POINT_LIGHTS];
 uniform vec3 view_pos;
+uniform bool emissive = false;
 
 vec3 calcPointLight(pointLight light, vec3 normal, vec3 frag_pos, vec3 view_dir);
 vec3 calcDirLight(dirLight light, vec3 normal, vec3 view_dir);
@@ -61,6 +63,15 @@ void main()
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
 		result += calcPointLight(point_lights[i], norm, frag_pos, view_dir);
+	}
+
+	//Emission
+	const float emission_amount = 4;
+
+	if (emissive)
+	{
+		vec3 emission = texture(material.texture_emission1, tex_coords).rgb;
+		result += emission * emission_amount;
 	}
 
 	//Calculate Bloom Threshold

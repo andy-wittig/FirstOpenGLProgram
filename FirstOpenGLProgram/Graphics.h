@@ -88,6 +88,7 @@ private:
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
+	Model* m_ISS;
 
 	CubeMap* m_skybox;
 
@@ -150,14 +151,14 @@ private:
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 0.25f);
 		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 1.0f);
+		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 0.25f);
 		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
 	}
@@ -326,9 +327,8 @@ public:
 		//--------------------
 
 		//Initialize Models
+		m_ISS = new Model("models/ISS/ISS.obj");
 		m_spaceship = new Model("models/carrier/carrier.obj");
-		m_spaceship->setPosition(glm::vec3(0.f, 2.f, -10.f));
-
 		m_player_ship = new Model("models/starship/starship.obj");
 
 		//OpenGL Global Settings
@@ -348,6 +348,7 @@ public:
 			glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -378,6 +379,7 @@ public:
 			glBindTexture(GL_TEXTURE_2D, pingpongColorBuffers[i]);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorBuffers[i], 0);
@@ -426,14 +428,25 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
-		//Space Ship
+		//Ships
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_ISS->getModel()));
+		m_ISS->Render(*m_shader);
+
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
 		m_spaceship->Render(*m_shader);
 
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
+		m_player_ship->Render(*m_shader);
+
 		//Planets
+		glUniform1f(m_shader->GetUniformLocation("emissive"), true);
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 30.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
 		m_sun->Render(*m_shader);
+		glUniform1f(m_shader->GetUniformLocation("emissive"), false);
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
@@ -442,11 +455,6 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
 		m_moon->Render(*m_shader);
-
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 10.0f);
-
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
-		m_player_ship->Render(*m_shader);
 		//--------------------
 
 		//-------------------- Render Instances
@@ -630,17 +638,17 @@ public:
 		if (abs(pitch) < 0.001) { pitch = 0; }
 		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
 
-		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 4.f));
+		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
 		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
 		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
 		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-		glm::mat4 player_scale = glm::scale(glm::vec3(.06f, .06f, .06f));
+		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
 		m_player_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
 		float speed = 0.05f;
-		float dist = 75.f;
+		float dist = 100.f;
 
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
 		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 0.f, sin(speed * elapsed_time) * dist);
@@ -652,7 +660,7 @@ public:
 		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
-		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .06f) * dist, 0.f, sin(speed * elapsed_time - .06f) * dist); //Light trails behind spaceship
+		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 0.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
 		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
 		m_point_light0->Update(light0_tmat);
 

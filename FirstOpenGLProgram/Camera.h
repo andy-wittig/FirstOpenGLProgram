@@ -54,11 +54,6 @@ public:
 		orientation = glm::rotate(orientation, glm::radians(-rot_y), up_dir);
 	}
 
-	float lerpSpeed(float start, float end, float f)
-	{
-		return start * (1.0 - f) + (end * f);
-	}
-
 	void Update(float dt)
 	{
 		camera_speed = CAMERA_SPEED * dt; //Delta time keeps the camera's speed consistent across machines.
@@ -66,9 +61,9 @@ public:
 		if (glm::length(velocity) < 0.0001) { velocity = glm::vec3(0.0f); }
 		else 
 		{ 
-			velocity.x = lerpSpeed(velocity.x, 0.f, FRICTION * dt);
-			velocity.y = lerpSpeed(velocity.y, 0.f, FRICTION * dt);
-			velocity.z = lerpSpeed(velocity.z, 0.f, FRICTION * dt);
+			velocity.x = glm::mix(velocity.x, 0.f, FRICTION * dt);
+			velocity.y = glm::mix(velocity.y, 0.f, FRICTION * dt);
+			velocity.z = glm::mix(velocity.z, 0.f, FRICTION * dt);
 		}
 
 		camera_pos += velocity * camera_speed;
