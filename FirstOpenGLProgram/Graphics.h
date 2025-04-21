@@ -152,19 +152,19 @@ private:
 		glUniform1f(shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
 
-		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 0.25f);
-		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.09f);
-		glUniform1f(shader->GetUniformLocation("point_lights[1].quadratic"), 0.032f);
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.25f, 0.25f, 0.25f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(.4f, .4f, .4f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[1].constant"), 1.5f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].linear"), 0.3f);
+		glUniform1f(shader->GetUniformLocation("point_lights[1].quadratic"), 0.05f);
 
-		glUniform3fv(shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.1f, 0.1f, 0.1f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 5.f)));
-		glUniform3fv(shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 0.25f);
-		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.09f);
-		glUniform1f(shader->GetUniformLocation("point_lights[2].quadratic"), 0.032f);
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].ambient"), 1, glm::value_ptr(glm::vec3(0.25f, 0.25f, 0.25f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].diffuse"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[2].specular"), 1, glm::value_ptr(glm::vec3(.4f, .4f, .4f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 1.5f);
+		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.3f);
+		glUniform1f(shader->GetUniformLocation("point_lights[2].quadratic"), 0.05f);
 	}
 
 public:
@@ -303,15 +303,8 @@ public:
 
 		//-------------------- Lights
 		m_point_light0 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light0->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
-
 		m_point_light1 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light1->setPosition(glm::vec3(-50.f, 0.f, 0.f));
-		m_point_light1->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
-
 		m_point_light2 = new Model("models/lightbulb/lightbulb.obj");
-		m_point_light2->setPosition(glm::vec3(50.f, 0.f, 0.f));
-		m_point_light2->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
 
 		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
 		m_dir_light->setPosition(glm::vec3(0.f, 35.f, 0.f));
@@ -338,9 +331,9 @@ public:
 
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
-		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 0.04f, 1.f);
+		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 0.02f, 1.f);
 		m_engine_particle2 = new Emitter();
-		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 0.04f, 1.f);
+		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 0.02f, 1.f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -444,7 +437,7 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
 		m_spaceship->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
 		m_player_ship->Render(*m_shader);
 
@@ -488,10 +481,10 @@ public:
 		m_dir_light->Render(*m_light_shader);
 		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light0->getModel()));
 		//m_point_light0->Render(*m_light_shader);
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
-		m_point_light1->Render(*m_light_shader);
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
-		m_point_light2->Render(*m_light_shader);
+		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
+		//m_point_light1->Render(*m_light_shader);
+		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
+		//m_point_light2->Render(*m_light_shader);
 		//--------------------
 		
 		//Render Cube Map
@@ -648,7 +641,7 @@ public:
 		m_camera->Update(dt);
 		m_camera->setFOV(fov);
 
-		//Player Ship
+		//-------------------- Player
 		if (abs(roll) < 0.001) { roll = 0; }
 		else { roll = lerp(roll, 0.f, ROLL_DECAY * dt); }
 
@@ -664,14 +657,22 @@ public:
 		m_player_ship->Update(player_mat * player_scale);
 
 		//Player Particles
-		glm::vec3 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.4f, 0.f, -.8f))[3];
-		glm::vec3 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.4f, 0.f, -.8f))[3];
+		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.425f, -.05f, -.8f));
+		glm::mat4 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.425f, -.05f, -.8f));
 		glm::vec3 particle_engine_velocity = glm::normalize(glm::vec3(player_mat * glm::vec4(0.f, 0.f, -1.f, 0.f)));
 
-		m_engine_particle1->emitParticles(dt, particle_engine_origin1, particle_engine_velocity);
-		m_engine_particle2->emitParticles(dt, particle_engine_origin2, particle_engine_velocity);
+		m_engine_particle1->emitParticles(dt, particle_engine_origin1[3], particle_engine_velocity);
+		m_engine_particle2->emitParticles(dt, particle_engine_origin2[3], particle_engine_velocity);
 
-		//Spaceship transform
+		//Player Lights
+		particle_engine_origin1 = glm::translate(particle_engine_origin1, glm::vec3(.0f, 0.f, -.6f));
+		particle_engine_origin2 = glm::translate(particle_engine_origin2, glm::vec3(.0f, 0.f, -.6f));
+
+		m_point_light1->Update(particle_engine_origin1 * glm::scale(glm::vec3(.03f, .03f, .03f)));
+		m_point_light2->Update(particle_engine_origin2 * glm::scale(glm::vec3(.03f, .03f, .03f)));
+		//--------------------
+
+		//--------------------Spaceship transform
 		double elapsed_time = glfwGetTime();
 		float speed = 0.05f;
 		float dist = 125.f;
@@ -689,6 +690,7 @@ public:
 		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 5.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
 		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
 		m_point_light0->Update(light0_tmat);
+		//--------------------
 
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
