@@ -1,0 +1,22 @@
+#version 460 core
+
+layout (location = 0) in vec3 v_position;
+layout (location = 1) in vec2 v_tex_coords;
+
+out vec2 tex_coords;
+out vec4 particle_color;
+
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform vec3 offset;
+uniform vec4 color;
+
+void main() 
+{ 
+    float scale = 1.0f;
+
+    tex_coords = v_tex_coords;
+    particle_color = color;
+
+	gl_Position = projectionMatrix * viewMatrix * vec4(v_position + offset, 1.0); 
+}

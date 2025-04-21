@@ -5,10 +5,10 @@
 #include "Main_Header.h"
 #include "Camera.h"
 #include "Object.h"
-#include "Light.h"
 #include "Cube_Map.h"
 #include "Shader.h"
 #include "Model.h"
+#include "Emitter.h"
 
 float lerp(float start, float end, float f)
 {
@@ -75,6 +75,7 @@ private:
 	Shader* m_skybox_shader;
 	Shader* m_blur_shader;
 	Shader* m_hdr_shader;
+	Shader* m_particle_shader;
 
 	//Light Models
 	Model* m_point_light0;
@@ -90,6 +91,9 @@ private:
 	Model* m_moon;
 
 	CubeMap* m_skybox;
+
+	//Particle Emitters
+	Emitter* m_particle;
 
 	//Transformations
 	glm::mat4 player_tmat;
@@ -192,6 +196,7 @@ public:
 		m_skybox_shader = new Shader();
 		m_blur_shader = new Shader;
 		m_hdr_shader = new Shader();
+		m_particle_shader = new Shader();
 
 		std::map<Shader*, std::pair<std::string, std::string>> shader_map
 		{
@@ -200,7 +205,8 @@ public:
 			{m_light_shader, {"v_light_shader_source.txt", "f_light_shader_source.txt"}},
 			{m_skybox_shader, {"v_cube_map_shader_source.txt", "f_cube_map_shader_source.txt"}},
 			{m_blur_shader, {"v_hdr_shader.txt", "f_blur_shader.txt"}},
-			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}}
+			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}},
+			{m_particle_shader, {"v_particle_shader.txt", "f_particle_shader.txt"}}
 		};
 
 		for (const auto& shader_entry : shader_map)
@@ -329,6 +335,10 @@ public:
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_player_ship = new Model("models/starship/starship.obj");
 
+		//Initialize Particles
+		m_particle = new Emitter();
+		m_particle->Initialize("textures/smoke.png", 100, 1, glm::vec3(0.f, 50.f, 0.f), glm::vec3(0.f, -0.01f, 0.f), 2.f, 500.f);
+
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
@@ -406,7 +416,7 @@ public:
 		return true;
 	}
 
-	void Render()
+	void Render(double dt)
 	{
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -488,6 +498,14 @@ public:
 		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
 		m_skybox->Render();
 		glDepthFunc(GL_LESS);
+
+		//-------------------- Render Particles
+		m_particle_shader->Enable();
+		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		m_particle->emitParticles(dt);
+		m_particle->Render(*m_particle_shader);
+		//--------------------
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -642,10 +660,10 @@ public:
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
 		float speed = 0.05f;
-		float dist = 100.f;
+		float dist = 125.f;
 
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
-		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 0.f, sin(speed * elapsed_time) * dist);
+		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 5.f, sin(speed * elapsed_time) * dist);
 		glm::vec3 tangent = glm::normalize(glm::cross(direction, up));
 		float angle = glm::atan2(tangent.x, tangent.z);
 
@@ -654,7 +672,7 @@ public:
 		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
-		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 0.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
+		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 5.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
 		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
 		m_point_light0->Update(light0_tmat);
 

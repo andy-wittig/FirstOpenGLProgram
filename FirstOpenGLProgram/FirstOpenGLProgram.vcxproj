@@ -145,11 +145,11 @@
     <ClInclude Include="Cube_Map.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Graphics.h" />
-    <ClInclude Include="Light.h" />
     <ClInclude Include="Main_Header.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="Emitter.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Window.h" />
@@ -166,6 +166,8 @@
     <Text Include="f_light_shader_source.txt" />
     <Text Include="skybox.txt" />
     <Text Include="lightbulb.txt" />
+    <Text Include="v_particle_shader.txt" />
+    <Text Include="f_particle_shader.txt" />
     <Text Include="v_cube_map_shader_source.txt" />
     <Text Include="v_hdr_shader.txt" />
     <Text Include="v_instance_shader.txt" />

@@ -47,9 +47,6 @@
     <ClInclude Include="Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Main_Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -60,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Emitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -110,6 +110,12 @@
       <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="f_blur_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="v_particle_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="f_particle_shader.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
   </ItemGroup>
