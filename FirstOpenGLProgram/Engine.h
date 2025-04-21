@@ -93,7 +93,7 @@ public:
 	void Display(GLFWwindow* window, double time)
 	{
 		m_graphics->Update(time, fov);
-		m_graphics->Render(time);
+		m_graphics->Render();
 		m_window->Swap();
 	}
 

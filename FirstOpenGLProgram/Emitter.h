@@ -29,17 +29,17 @@ private:
 	unsigned int particle_total;
 	unsigned int spawn_amount;
 	glm::vec3 particle_velocity;
+	glm::vec3 prev_origin;
 	float particle_range;
 	float particle_life;
 	const char* texture_path;
 
 public:
-	void Initialize(const char* texture_path, unsigned int total_spawned, unsigned int spawn_amount, glm::vec3 velocity, float range, float life)
+	void Initialize(const char* texture_path, unsigned int total_spawned, unsigned int spawn_amount, float range, float life)
 	{
 		this->texture_path = texture_path;
 		particle_total = total_spawned;
 		this->spawn_amount = spawn_amount;
-		particle_velocity = velocity;
 		particle_range = range;
 		particle_life = life;
 
@@ -97,7 +97,7 @@ public:
 		return 0;
 	}
 
-	void respawnParticle(Particle &particle, glm::vec3 particle_origin)
+	void respawnParticle(Particle &particle, glm::vec3 particle_origin, glm::vec3 particle_velocity)
 	{
 		float x = glm::linearRand(-particle_range, particle_range);
 		float y = glm::linearRand(-particle_range, particle_range);
@@ -108,8 +108,11 @@ public:
 		particle.color = glm::vec4(1.0f);
 	}
 
-	void emitParticles(double dt, glm::vec3 origin)
+	void emitParticles(double dt, glm::vec3 origin, glm::vec3 velocity)
 	{
+		glm::vec3 object_movement = origin - prev_origin;
+		prev_origin = origin;
+
 		spawn_accumulator += SPAWN_RATE * dt;
 
 		if (spawn_accumulator > 1)
@@ -118,7 +121,7 @@ public:
 			for (unsigned int i = 0; i < spawn_amount; i++) //Emit new particles
 			{
 				int unused_particle = firstUnusedParticle();
-				respawnParticle(particles[unused_particle], origin);
+				respawnParticle(particles[unused_particle], origin, velocity);
 			}
 		}
 
@@ -129,7 +132,9 @@ public:
 
 			if (part.life > 0.f)
 			{
-				part.position -= part.velocity * dt;
+				//part.position -= part.velocity * dt;
+				part.position += object_movement;
+				part.position += part.velocity * dt;
 				part.color.a = part.life / particle_life;
 			}
 		}
@@ -138,6 +143,7 @@ public:
 	void Render(Shader& shader)
 	{
 		glDepthMask(GL_FALSE);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, particle_texture);
@@ -157,6 +163,7 @@ public:
 		glBindVertexArray(0);
 
 		glDepthMask(GL_TRUE);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	unsigned int TextureFromFile(const char* texture_path)

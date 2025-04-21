@@ -138,8 +138,6 @@ private:
 	float pitch = 0.f;
 	float pitch_speed = 35.f;
 
-	glm::mat4 player_mat;
-
 	void setShaderLights(Shader *shader)
 	{
 		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
@@ -340,9 +338,9 @@ public:
 
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
-		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, glm::vec3(0.f, 0.f, 0.f), 0.04f, .6f);
+		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 0.04f, 1.f);
 		m_engine_particle2 = new Emitter();
-		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, glm::vec3(0.f, 0.f, 0.f), 0.04f, .6f);
+		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 0.04f, 1.f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -421,7 +419,7 @@ public:
 		return true;
 	}
 
-	void Render(double dt)
+	void Render()
 	{
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -508,9 +506,8 @@ public:
 		m_particle_shader->Enable();
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .1f);
-		m_engine_particle1->emitParticles(dt, (glm::translate(player_mat, glm::vec3(.4f, 0.f, -.8f)))[3]);
-		m_engine_particle2->emitParticles(dt, (glm::translate(player_mat, glm::vec3(-.4f, 0.f, -.8f)))[3]);
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .08f);
+
 		m_engine_particle1->Render(*m_particle_shader);
 		m_engine_particle2->Render(*m_particle_shader);
 		//--------------------
@@ -663,8 +660,16 @@ public:
 		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
 		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
 		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
-		player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
-		m_player_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
+		glm::mat4 player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
+		m_player_ship->Update(player_mat * player_scale);
+
+		//Player Particles
+		glm::vec3 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.4f, 0.f, -.8f))[3];
+		glm::vec3 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.4f, 0.f, -.8f))[3];
+		glm::vec3 particle_engine_velocity = glm::normalize(glm::vec3(player_mat * glm::vec4(0.f, 0.f, -1.f, 0.f)));
+
+		m_engine_particle1->emitParticles(dt, particle_engine_origin1, particle_engine_velocity);
+		m_engine_particle2->emitParticles(dt, particle_engine_origin2, particle_engine_velocity);
 
 		//Spaceship transform
 		double elapsed_time = glfwGetTime();
