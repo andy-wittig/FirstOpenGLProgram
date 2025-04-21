@@ -24,6 +24,7 @@ private:
 	bool m_FULLSCREEN;
 
 	float delta_time = 0.0f;
+	float delta_time_2 = 0.f;
 	float last_frame = 0.0f;
 
 	double last_mouse_x, last_mouse_y;
@@ -75,12 +76,12 @@ public:
 	{
 		m_running = true;
 
-		float current_frame = glfwGetTime();
-		delta_time = current_frame - last_frame;
-		last_frame = current_frame;
-
 		while (!glfwWindowShouldClose(m_window->getWindow()))
 		{
+			float current_frame = glfwGetTime();
+			delta_time = current_frame - last_frame;
+			last_frame = current_frame;
+
 			ProcessInput();
 			Display(m_window->getWindow(), delta_time);
 			glfwPollEvents();

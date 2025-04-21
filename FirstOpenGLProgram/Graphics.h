@@ -128,14 +128,14 @@ private:
 	int screen_height;
 
 	const float ROLL_MAX = 30.f;
-	const float ROLL_DECAY = .001;
+	const float ROLL_DECAY = 1.f;
 	float roll = 0.f;
-	float roll_speed = 0.1f;
+	float roll_speed = 35.f;
 
 	const float PITCH_MAX = 15.f;
-	const float PITCH_DECAY = .0025;
+	const float PITCH_DECAY = 1.f;
 	float pitch = 0.f;
-	float pitch_speed = 0.05f;
+	float pitch_speed = 35.f;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -337,7 +337,7 @@ public:
 
 		//Initialize Particles
 		m_particle = new Emitter();
-		m_particle->Initialize("textures/smoke.png", 100, 1, glm::vec3(0.f, 50.f, 0.f), glm::vec3(0.f, -0.01f, 0.f), 2.f, 500.f);
+		m_particle->Initialize("textures/smoke.png", 10, 1, glm::vec3(0.f, -0.001f, 0.f), .8f, 500.f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -503,7 +503,8 @@ public:
 		m_particle_shader->Enable();
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		m_particle->emitParticles(dt);
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .25f);
+		m_particle->emitParticles(dt, m_player_ship->getPosition());
 		m_particle->Render(*m_particle_shader);
 		//--------------------
 
@@ -581,23 +582,23 @@ public:
 	{
 		if (x < screen_width / 2)
 		{
-			roll -= roll_speed * 0.5 * dt;
+			roll -= roll_speed * dt;
 			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
 		}
 		else if (x > screen_width / 2)
 		{
-			roll += roll_speed * 0.5 * dt;
+			roll += roll_speed * dt;
 			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
 		}
 
 		if (y < screen_height / 2)
 		{
-			pitch += pitch_speed * 0.6 * dt;
+			pitch += pitch_speed * dt;
 			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
 		}
 		else if (y > screen_height / 2)
 		{
-			pitch -= pitch_speed * 0.6 * dt;
+			pitch -= pitch_speed * dt;
 			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
 		}
 
