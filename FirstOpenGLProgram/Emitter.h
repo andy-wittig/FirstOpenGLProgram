@@ -22,7 +22,7 @@ private:
 	unsigned int particleVBO, particleVAO;
 	unsigned int last_used_particle = 0;
 	unsigned int particle_texture;
-	const float SPAWN_RATE = 80;
+	const float SPAWN_RATE = 15.f;
 	float spawn_accumulator;
 
 	//Particle settings
@@ -72,9 +72,9 @@ public:
 		}
 	}
 
-	int firstUnusedParticle()
+	unsigned int firstUnusedParticle()
 	{
-		for (int i = last_used_particle; i < particle_total; i++) //First attempt to find, usually works
+		for (unsigned int i = last_used_particle; i < particle_total; i++) //First attempt to find, usually works
 		{
 			if (particles[i].life <= 0.f)
 			{
@@ -84,7 +84,7 @@ public:
 		}
 
 		//Linear Search
-		for (int i = 0; i < particle_total; i++)
+		for (unsigned int i = 0; i < particle_total; i++)
 		{
 			if (particles[i].life <= 0.f)
 			{
@@ -93,8 +93,8 @@ public:
 			}
 		}
 
-		last_used_particle = -1;
-		return -1;
+		last_used_particle = 0;
+		return 0;
 	}
 
 	void respawnParticle(Particle &particle, glm::vec3 particle_origin)
@@ -110,11 +110,14 @@ public:
 
 	void emitParticles(double dt, glm::vec3 origin)
 	{
-		for (unsigned int i = 0; i < spawn_amount; i++) //Emit new particles
+		spawn_accumulator += SPAWN_RATE * dt;
+
+		if (spawn_accumulator > 1)
 		{
-			int unused_particle = firstUnusedParticle();
-			if (unused_particle != -1)
+			spawn_accumulator = 0;
+			for (unsigned int i = 0; i < spawn_amount; i++) //Emit new particles
 			{
+				int unused_particle = firstUnusedParticle();
 				respawnParticle(particles[unused_particle], origin);
 			}
 		}

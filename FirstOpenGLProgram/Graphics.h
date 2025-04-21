@@ -93,7 +93,8 @@ private:
 	CubeMap* m_skybox;
 
 	//Particle Emitters
-	Emitter* m_particle;
+	Emitter* m_engine_particle1;
+	Emitter* m_engine_particle2;
 
 	//Transformations
 	glm::mat4 player_tmat;
@@ -136,6 +137,8 @@ private:
 	const float PITCH_DECAY = 1.f;
 	float pitch = 0.f;
 	float pitch_speed = 35.f;
+
+	glm::mat4 player_mat;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -336,8 +339,10 @@ public:
 		m_player_ship = new Model("models/starship/starship.obj");
 
 		//Initialize Particles
-		m_particle = new Emitter();
-		m_particle->Initialize("textures/smoke.png", 10, 1, glm::vec3(0.f, -0.001f, 0.f), .8f, 500.f);
+		m_engine_particle1 = new Emitter();
+		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, glm::vec3(0.f, 0.f, 0.f), 0.04f, .6f);
+		m_engine_particle2 = new Emitter();
+		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, glm::vec3(0.f, 0.f, 0.f), 0.04f, .6f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -503,9 +508,11 @@ public:
 		m_particle_shader->Enable();
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .25f);
-		m_particle->emitParticles(dt, m_player_ship->getPosition());
-		m_particle->Render(*m_particle_shader);
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .1f);
+		m_engine_particle1->emitParticles(dt, (glm::translate(player_mat, glm::vec3(.4f, 0.f, -.8f)))[3]);
+		m_engine_particle2->emitParticles(dt, (glm::translate(player_mat, glm::vec3(-.4f, 0.f, -.8f)))[3]);
+		m_engine_particle1->Render(*m_particle_shader);
+		m_engine_particle2->Render(*m_particle_shader);
 		//--------------------
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -606,7 +613,7 @@ public:
 	}
 
 	void MoveCameraForward(double dt)
-	{ 
+	{
 		m_camera->MoveForward();
 		pitch += pitch_speed * dt;
 		pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch)); //clamp
@@ -618,7 +625,7 @@ public:
 		pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
 	}
 	void MoveCameraLeft(double dt) 
-	{ 
+	{
 		m_camera->MoveLeft();
 		roll -= roll_speed * dt;
 		roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
@@ -656,6 +663,7 @@ public:
 		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
 		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
 		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
+		player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
 		m_player_ship->Update(glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale);
 
 		//Spaceship transform
