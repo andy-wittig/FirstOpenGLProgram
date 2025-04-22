@@ -95,6 +95,7 @@ private:
 	//Particle Emitters
 	Emitter* m_engine_particle1;
 	Emitter* m_engine_particle2;
+	Emitter* m_sun_particle;
 
 	//Transformations
 	glm::mat4 player_tmat;
@@ -331,9 +332,11 @@ public:
 
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
-		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 0.02f, 1.f);
+		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 15, .02f, 1.f);
 		m_engine_particle2 = new Emitter();
-		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 0.02f, 1.f);
+		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 15, .02f, 1.f);
+		m_sun_particle = new Emitter();
+		m_sun_particle->Initialize("textures/flame.png", 50, 1, 8, 30.f, .8f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -446,11 +449,11 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 30.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
 		m_sun->Render(*m_shader);
-		glUniform1f(m_shader->GetUniformLocation("emissive"), false);
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
 		m_earth->Render(*m_shader);
+		glUniform1f(m_shader->GetUniformLocation("emissive"), false);
 
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
@@ -499,10 +502,13 @@ public:
 		m_particle_shader->Enable();
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .08f);
-
 		m_engine_particle1->Render(*m_particle_shader);
 		m_engine_particle2->Render(*m_particle_shader);
+
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.f);
+		m_sun_particle->Render(*m_particle_shader);
 		//--------------------
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -657,8 +663,8 @@ public:
 		m_player_ship->Update(player_mat * player_scale);
 
 		//Player Particles
-		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.425f, -.05f, -.8f));
-		glm::mat4 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.425f, -.05f, -.8f));
+		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.43f, -.05f, -.7f));
+		glm::mat4 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.43f, -.05f, -.7f));
 		glm::vec3 particle_engine_velocity = glm::normalize(glm::vec3(player_mat * glm::vec4(0.f, 0.f, -1.f, 0.f)));
 
 		m_engine_particle1->emitParticles(dt, particle_engine_origin1[3], particle_engine_velocity);
@@ -695,6 +701,8 @@ public:
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
+
+		m_sun_particle->emitParticles(dt, glm::vec3(0.f), glm::vec3(0.f));
 
 		//earth transform
 		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 3.f, 3.f, 3.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);

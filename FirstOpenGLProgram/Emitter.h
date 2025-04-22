@@ -16,30 +16,30 @@ private:
 
 		Particle() : position(0.f), velocity(0.f), color(1.f), life(0.f) { }
 	};
-
 	std::vector<Particle> particles;
+
+	//Particle settings
+	const char* texture_path;
+	unsigned int particle_total;
+	unsigned int spawn_amount;
+	float particle_range;
+	float particle_life;
 
 	unsigned int particleVBO, particleVAO;
 	unsigned int last_used_particle = 0;
 	unsigned int particle_texture;
-	const float SPAWN_RATE = 15.f;
+	unsigned int spawn_rate;
 	float spawn_accumulator;
-
-	//Particle settings
-	unsigned int particle_total;
-	unsigned int spawn_amount;
 	glm::vec3 particle_velocity;
 	glm::vec3 prev_origin;
-	float particle_range;
-	float particle_life;
-	const char* texture_path;
 
 public:
-	void Initialize(const char* texture_path, unsigned int total_spawned, unsigned int spawn_amount, float range, float life)
+	void Initialize(const char* texture_path, unsigned int total_spawned, unsigned int spawn_amount, unsigned int rate, float range, float life)
 	{
 		this->texture_path = texture_path;
 		particle_total = total_spawned;
 		this->spawn_amount = spawn_amount;
+		spawn_rate = rate;
 		particle_range = range;
 		particle_life = life;
 
@@ -99,10 +99,8 @@ public:
 
 	void respawnParticle(Particle &particle, glm::vec3 particle_origin, glm::vec3 particle_velocity)
 	{
-		float x = glm::linearRand(-particle_range, particle_range);
-		float y = glm::linearRand(-particle_range, particle_range);
-		float z = glm::linearRand(-particle_range, particle_range);
-		particle.position = particle_origin + glm::vec3(x, y, z);
+		glm::vec3 offset = glm::sphericalRand(particle_range);
+		particle.position = particle_origin + offset;
 		particle.life = particle_life;
 		particle.velocity = particle_velocity;
 		particle.color = glm::vec4(1.0f);
@@ -113,7 +111,7 @@ public:
 		glm::vec3 object_movement = origin - prev_origin;
 		prev_origin = origin;
 
-		spawn_accumulator += SPAWN_RATE * dt;
+		spawn_accumulator += spawn_rate * dt;
 
 		if (spawn_accumulator > 1)
 		{

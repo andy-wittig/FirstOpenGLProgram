@@ -13,7 +13,7 @@ private:
 	glm::mat4 projection;
 	glm::mat4 view;
 
-	glm::vec3 camera_pos = glm::vec3(0.0, 50.0, -8.0);
+	glm::vec3 camera_pos = glm::vec3(0.0, 30.0, -60.0);
 	glm::vec3 velocity = glm::vec3(0.0);
 	glm::vec3 orientation = glm::vec3(0.0, 0.0, 1.0);
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
