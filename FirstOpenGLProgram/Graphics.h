@@ -8,6 +8,7 @@
 #include "Cube_Map.h"
 #include "Shader.h"
 #include "Model.h"
+#include "Sphere.h"
 #include "Emitter.h"
 
 float lerp(float start, float end, float f)
@@ -76,6 +77,7 @@ private:
 	Shader* m_blur_shader;
 	Shader* m_hdr_shader;
 	Shader* m_particle_shader;
+	Shader* m_outline_shader;
 
 	//Light Models
 	Model* m_point_light0;
@@ -92,10 +94,14 @@ private:
 
 	CubeMap* m_skybox;
 
+	//Procedural Models
+	Sphere* m_procedural_sphere;
+
 	//Particle Emitters
 	Emitter* m_engine_particle1;
 	Emitter* m_engine_particle2;
 	Emitter* m_sun_particle;
+	Emitter* m_ship_particle;
 
 	//Transformations
 	glm::mat4 player_tmat;
@@ -111,7 +117,7 @@ private:
 	glm::mat4 smat;
 	glm::mat4 t_offset;
 	glm::mat4 r_offset;
-	std::stack<glm::mat4> transformation_stack;
+	std::stack<glm::mat4> planet_stack;
 
 	//Frame Buffers
 	unsigned int hdrFBO;
@@ -119,9 +125,10 @@ private:
 	unsigned int colorBuffers[2];
 	unsigned int pingpongColorBuffers[2];
 	unsigned int rboDepth;
+	unsigned int rboStencil;
 
 	//Asteroid Instance Variables
-	static const int asteroid_amount = 300;
+	static const int asteroid_amount = 600;
 	std::vector<glm::mat4> asteroidMatrices;
 	Model* m_asteroid;
 
@@ -138,6 +145,11 @@ private:
 	const float PITCH_DECAY = 1.f;
 	float pitch = 0.f;
 	float pitch_speed = 35.f;
+
+	glm::mat4 player_mat;
+
+	bool observing = false;
+	bool can_observe = false;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -199,6 +211,7 @@ public:
 		m_blur_shader = new Shader;
 		m_hdr_shader = new Shader();
 		m_particle_shader = new Shader();
+		m_outline_shader = new Shader();
 
 		std::map<Shader*, std::pair<std::string, std::string>> shader_map
 		{
@@ -208,7 +221,8 @@ public:
 			{m_skybox_shader, {"v_cube_map_shader_source.txt", "f_cube_map_shader_source.txt"}},
 			{m_blur_shader, {"v_hdr_shader.txt", "f_blur_shader.txt"}},
 			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}},
-			{m_particle_shader, {"v_particle_shader.txt", "f_particle_shader.txt"}}
+			{m_particle_shader, {"v_particle_shader.txt", "f_particle_shader.txt"}},
+			{m_outline_shader, {"v_outline_shader.txt", "f_outline_shader.txt"}},
 		};
 
 		for (const auto& shader_entry : shader_map)
@@ -270,7 +284,6 @@ public:
 			asteroidMatrices.push_back(model);
 		}
 		m_asteroid = new Model("models/asteroid/asteroid.obj", asteroidMatrices);
-		//--------------------
 		
 		//-------------------- Solar System
 		float angle = glm::linearRand(0.0f, 360.0f);
@@ -300,7 +313,6 @@ public:
 		m_sun = new Model("models/Sun/Sun.obj");
 		m_earth = new Model("models/Earth/Earth.obj");
 		m_moon = new Model("models/Moon/Moon.obj");
-		//--------------------
 
 		//-------------------- Lights
 		m_point_light0 = new Model("models/lightbulb/lightbulb.obj");
@@ -310,7 +322,6 @@ public:
 		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
 		m_dir_light->setPosition(glm::vec3(0.f, 35.f, 0.f));
 		m_dir_light->setScale(glm::vec3(0.6f, 0.6f, 0.6f));
-		//--------------------
 
 		//-------------------- Cube Maps
 		m_skybox = new CubeMap();
@@ -330,13 +341,18 @@ public:
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_player_ship = new Model("models/starship/starship.obj");
 
+		m_procedural_sphere = new Sphere();
+		m_procedural_sphere->Initialize("textures/crystal.png", "textures/crystal_specular_map.png");
+
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
-		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 15, .02f, 1.f);
+		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 20, .02f, 1.f);
 		m_engine_particle2 = new Emitter();
-		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 15, .02f, 1.f);
+		m_engine_particle2->Initialize("textures/smoke.png", 20, 1, 20, .02f, 1.f);
 		m_sun_particle = new Emitter();
-		m_sun_particle->Initialize("textures/flame.png", 50, 1, 8, 30.f, .8f);
+		m_sun_particle->Initialize("textures/flame.png", 50, 1, 10, 30.f, .8f);
+		m_ship_particle = new Emitter();
+		m_ship_particle->Initialize("textures/smoke.png", 40, 1, 10, .1f, 3.f);
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -344,6 +360,9 @@ public:
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glEnable(GL_STENCIL_TEST);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 		//-------------------- Frame Buffers
 		glGenFramebuffers(1, &hdrFBO);
@@ -362,10 +381,10 @@ public:
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
 		}
 
-		glGenRenderbuffers(1, &rboDepth);
-		glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screen_width, screen_height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+		glGenRenderbuffers(1, &rboStencil);
+		glBindRenderbuffer(GL_RENDERBUFFER, rboStencil);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboStencil);
 
 		unsigned int attachements[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 		glDrawBuffers(2, attachements);
@@ -396,7 +415,6 @@ public:
 				std::cout << "Blur Framebuffer not complete!" << std::endl;
 			}
 		}
-		//--------------------
 
 		//Shader Light Settings
 		m_shader->Enable();
@@ -418,14 +436,15 @@ public:
 	void Render()
 	{
 		glClearColor(0.17, 0.12, 0.19, 1.0); //background color
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
 
 		//-------------------- Render Models
 		m_shader->Enable();
-		
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
@@ -458,7 +477,13 @@ public:
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
 		m_moon->Render(*m_shader);
-		//--------------------
+
+		glStencilMask(0x00);
+
+		//Procedurals
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_procedural_sphere->getModel()));
+		m_procedural_sphere->Render(*m_shader);
 
 		//-------------------- Render Instances
 		m_instance_shader->Enable();
@@ -473,22 +498,22 @@ public:
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		m_asteroid->Render(*m_instance_shader);
-		//--------------------
 
 		//-------------------- Render Lights
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
+		/*
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
 		m_dir_light->Render(*m_light_shader);
-		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light0->getModel()));
-		//m_point_light0->Render(*m_light_shader);
-		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
-		//m_point_light1->Render(*m_light_shader);
-		//glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
-		//m_point_light2->Render(*m_light_shader);
-		//--------------------
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light0->getModel()));
+		m_point_light0->Render(*m_light_shader);
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
+		m_point_light1->Render(*m_light_shader);
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
+		m_point_light2->Render(*m_light_shader);
+		*/
 		
 		//Render Cube Map
 		glDepthFunc(GL_LEQUAL);
@@ -497,6 +522,21 @@ public:
 		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
 		m_skybox->Render();
 		glDepthFunc(GL_LESS);
+
+		//-------------------- Render Outlines
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glDisable(GL_DEPTH_TEST);
+
+		m_outline_shader->Enable();
+		glUniform1f(m_outline_shader->GetUniformLocation("outline"), 1.01f);
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
+		m_sun->RenderOutline();
+
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glEnable(GL_DEPTH_TEST);
 
 		//-------------------- Render Particles
 		m_particle_shader->Enable();
@@ -509,7 +549,9 @@ public:
 
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.f);
 		m_sun_particle->Render(*m_particle_shader);
-		//--------------------
+
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .5f);
+		m_ship_particle->Render(*m_particle_shader);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -532,7 +574,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		//HDR Rendering
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		m_hdr_shader->Enable();
 
 		glActiveTexture(GL_TEXTURE0);
@@ -654,13 +696,16 @@ public:
 		if (abs(pitch) < 0.001) { pitch = 0; }
 		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
 
-		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
-		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
-		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
-		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
-		glm::mat4 player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
-		m_player_ship->Update(player_mat * player_scale);
+		if (!observing)
+		{
+			glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
+			glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
+			glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
+			glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
+			player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
+			m_player_ship->Update(player_mat * player_scale);
+		}
 
 		//Player Particles
 		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.43f, -.05f, -.7f));
@@ -676,7 +721,6 @@ public:
 
 		m_point_light1->Update(particle_engine_origin1 * glm::scale(glm::vec3(.03f, .03f, .03f)));
 		m_point_light2->Update(particle_engine_origin2 * glm::scale(glm::vec3(.03f, .03f, .03f)));
-		//--------------------
 
 		//--------------------Spaceship transform
 		double elapsed_time = glfwGetTime();
@@ -693,33 +737,54 @@ public:
 		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
+		//Ship Particles
+		glm::mat4 particle_ship_origin = glm::translate(spaceship_tmat * spaceship_rmat, glm::vec3(.0f, .0f, -1.f));
+		glm::vec3 particle_ship_velocity = glm::normalize(glm::vec3(spaceship_tmat * spaceship_rmat * glm::vec4(0.f, 0.f, -1.f, 0.f)));
+		m_ship_particle->emitParticles(dt, particle_ship_origin[3], particle_ship_velocity);
+
+		//Ship Lights
 		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 5.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
 		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
 		m_point_light0->Update(light0_tmat);
-		//--------------------
 
+		//--------------------Solar System transform
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		transformation_stack.push(t_offset * r_offset * tmat * rmat * smat);
+		planet_stack.push(t_offset * r_offset * tmat * rmat * smat);
 
 		m_sun_particle->emitParticles(dt, glm::vec3(0.f), glm::vec3(0.f));
 
 		//earth transform
-		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 3.f, 3.f, 3.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
-		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
+		planet_stack.push(planet_stack.top() * tmat * rmat * smat);
 
 		//moon transform
-		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { 1.f, 1.f, 1.f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
-		transformation_stack.push(transformation_stack.top() * tmat * rmat * smat);
+		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .5f, .5f, .5f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		planet_stack.push(planet_stack.top() * tmat * rmat * smat);
 
-		//Stack
-		m_moon->Update(transformation_stack.top());
-		transformation_stack.pop();
-		m_earth->Update(transformation_stack.top());
-		transformation_stack.pop();
-		m_sun->Update(transformation_stack.top());
-		transformation_stack.pop();
+		//Find closest planet
+		std::stack<glm::mat4> planet_stack_copy = planet_stack;
+		std::vector<float> planet_distances;
+
+		while (!planet_stack_copy.empty())
+		{
+			planet_distances.push_back(glm::length(planet_stack_copy.top()[3] - player_mat[3]));
+			planet_stack_copy.pop();
+		}
+
+		auto shortest_distance_it = std::min_element(planet_distances.begin(), planet_distances.end());
+		float shortest_distance = *shortest_distance_it;
+		planet_distances.clear();
+		std::cout << "Closest Planet: " << shortest_distance << std::endl;
+
+		//Stack Updates
+		m_moon->Update(planet_stack.top());
+		planet_stack.pop();
+		m_earth->Update(planet_stack.top());
+		planet_stack.pop();
+		m_sun->Update(planet_stack.top());
+		planet_stack.pop();
 	}
 };
 #endif

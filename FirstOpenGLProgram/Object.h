@@ -7,7 +7,7 @@
 
 class Object
 {
-private:
+public:
 	struct Vertex
 	{
 		glm::vec3 vertex;
@@ -23,11 +23,10 @@ private:
 	GLuint VAO;
 
 	Texture* m_texture;
-	
+
 	glm::mat4 model;
 	glm::vec3 world_origin = glm::vec3(0.f, 0.f, 0.f);
 
-public:
 	void Initialize(const char* object_file_path, const char* diffuse_map_path, const char* specular_map_path)
 	{ 
 		loadModel(object_file_path);
@@ -65,10 +64,10 @@ public:
 		m_texture->Initialize(diffuse_map_path, specular_map_path);
 	}
 
-	void Render()
+	void Render(Shader &shader)
 	{
 		glBindVertexArray(VAO);
-		m_texture->bindTextures();
+		m_texture->bindTextures(shader);
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}

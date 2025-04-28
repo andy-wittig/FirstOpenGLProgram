@@ -196,6 +196,14 @@ public:
 			meshes[i].Render(shader);
 		}
 	}
+	void RenderOutline()
+	{
+		for (unsigned int i = 0; i < meshes.size(); i++)
+		{
+			meshes[i].RenderOutline();
+		}
+	}
+
 
 	void Update(glm::mat4 model_transform)
 	{

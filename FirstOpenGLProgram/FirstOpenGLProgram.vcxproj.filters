@@ -62,6 +62,9 @@
     <ClInclude Include="Emitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="v_shader_source.txt">
@@ -116,6 +119,12 @@
       <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="f_particle_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="v_outline_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
+    <Text Include="f_outline_shader.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
   </ItemGroup>

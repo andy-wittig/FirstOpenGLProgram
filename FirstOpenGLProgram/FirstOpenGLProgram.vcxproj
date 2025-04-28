@@ -151,6 +151,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="Emitter.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
@@ -160,12 +161,14 @@
     <Text Include="f_blur_shader.txt" />
     <Text Include="f_cube_map_shader_source.txt" />
     <Text Include="f_hdr_shader.txt" />
+    <Text Include="f_outline_shader.txt" />
     <Text Include="f_shader_source.txt" />
     <Text Include="pyramid.txt" />
     <Text Include="quad.txt" />
     <Text Include="f_light_shader_source.txt" />
     <Text Include="skybox.txt" />
     <Text Include="lightbulb.txt" />
+    <Text Include="v_outline_shader.txt" />
     <Text Include="v_particle_shader.txt" />
     <Text Include="f_particle_shader.txt" />
     <Text Include="v_cube_map_shader_source.txt" />

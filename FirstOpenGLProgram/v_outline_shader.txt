@@ -1,0 +1,13 @@
+#version 460 core
+
+layout (location = 0) in vec3 v_position;
+
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
+uniform float outline;
+
+void main() 
+{ 
+	gl_Position = (projectionMatrix * viewMatrix * modelMatrix) * vec4(v_position * outline, 1.0); 
+}

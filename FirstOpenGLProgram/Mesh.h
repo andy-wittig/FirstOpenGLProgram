@@ -34,6 +34,7 @@ private:
 	std::vector<glm::mat4> instanceMatrices;
 
 	unsigned int instanceVB, VB, IB, VAO;
+	unsigned int outlineVB, outlineIB, outlineVAO;
 
 	void Initialize()
 	{
@@ -74,6 +75,22 @@ private:
 			}
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
+		glBindVertexArray(0);
+
+		//Outline VAO
+		glGenVertexArrays(1, &outlineVAO);
+		glBindVertexArray(outlineVAO);
+
+		glGenBuffers(1, &outlineVB);
+		glGenBuffers(1, &outlineIB);
+
+		glBindBuffer(GL_ARRAY_BUFFER, outlineVB);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, outlineIB);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
 		glBindVertexArray(0);
 	}
@@ -92,7 +109,7 @@ public:
 	void Render(Shader &shader)
 	{
 		//Bind appropriate textures
-		unsigned int diffuse_n = 1, specular_n = 1, normal_n = 1, height_n = 1;
+		unsigned int diffuse_n = 1, specular_n = 1, normal_n = 1, height_n = 1, emission_n = 1;
 
 		for (unsigned int i = 0; i < textures.size(); i++)
 		{
@@ -103,7 +120,7 @@ public:
 			else if (name == "texture_specular") { number = std::to_string(specular_n++); }
 			else if (name == "texture_normal") { number = std::to_string(normal_n++); }
 			else if (name == "texture_height") { number = std::to_string(height_n++); }
-			else if (name == "texture_emission") { number = std::to_string(height_n++); }
+			else if (name == "texture_emission") { number = std::to_string(emission_n++); }
 
 			glUniform1i(shader.GetUniformLocation(("material." + name + number).c_str()), i);
 			glActiveTexture(GL_TEXTURE0 + i);
@@ -119,6 +136,14 @@ public:
 		{
 			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		}
+		glBindVertexArray(0);
+	}
+
+	void RenderOutline()
+	{
+		glBindVertexArray(outlineVAO);
+		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 	}
 };
 #endif

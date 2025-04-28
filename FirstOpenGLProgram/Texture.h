@@ -3,6 +3,7 @@
 #define TEXTURE_H
 
 #include "Main_Header.h"
+#include "Shader.h"
 
 class Texture
 {
@@ -91,11 +92,13 @@ public:
 		return texture;
 	}
 
-	void bindTextures()
+	void bindTextures(Shader &shader)
 	{
+		glUniform1i(shader.GetUniformLocation("material.texture_diffuse1"), 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuse_map);
 
+		glUniform1i(shader.GetUniformLocation("material.texture_specular1"), 1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specular_map);
 	}
