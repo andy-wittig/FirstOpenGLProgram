@@ -117,7 +117,7 @@ private:
 	glm::mat4 smat;
 	glm::mat4 t_offset;
 	glm::mat4 r_offset;
-	std::stack<glm::mat4> planet_stack;
+	std::stack<std::pair<std::string, glm::mat4>> planet_stack;
 
 	//Frame Buffers
 	unsigned int hdrFBO;
@@ -148,8 +148,8 @@ private:
 
 	glm::mat4 player_mat;
 
-	bool observing = false;
-	bool can_observe = false;
+	const float SELECT_PLANET_RANGE = 65.f;
+	std::pair<std::string, float> closest_planet;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -440,10 +440,18 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
+		//-------------------- Render Cube Map
+		glDepthFunc(GL_LEQUAL);
+		m_skybox_shader->Enable();
+		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
+		m_skybox->Render();
+		glDepthFunc(GL_LESS);
 
 		//-------------------- Render Models
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+
 		m_shader->Enable();
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
@@ -514,29 +522,14 @@ public:
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
 		m_point_light2->Render(*m_light_shader);
 		*/
-		
-		//Render Cube Map
-		glDepthFunc(GL_LEQUAL);
-		m_skybox_shader->Enable();
-		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_skybox_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(m_camera->GetView()))));
-		m_skybox->Render();
-		glDepthFunc(GL_LESS);
 
 		//-------------------- Render Outlines
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glDisable(GL_DEPTH_TEST);
-
-		m_outline_shader->Enable();
-		glUniform1f(m_outline_shader->GetUniformLocation("outline"), 1.01f);
-		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
-		m_sun->RenderOutline();
-
-		glStencilMask(0xFF);
-		glStencilFunc(GL_ALWAYS, 0, 0xFF);
-		glEnable(GL_DEPTH_TEST);
+		if (closest_planet.second <= SELECT_PLANET_RANGE)
+		{
+			if (closest_planet.first == "sun") { drawOutline(m_sun); }
+			else if (closest_planet.first == "earth") { drawOutline(m_earth); }
+			else if (closest_planet.first == "moon") { drawOutline(m_moon); }
+		}
 
 		//-------------------- Render Particles
 		m_particle_shader->Enable();
@@ -589,6 +582,23 @@ public:
 			std::string val = ErrorString(error);
 			std::cout << "Error Initializing OpenGL!" << error << "," << val << std::endl;
 		}
+	}
+
+	void drawOutline(Model* model)
+	{
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glDisable(GL_DEPTH_TEST);
+
+		m_outline_shader->Enable();
+		glUniform1f(m_outline_shader->GetUniformLocation("outline"), 1.01f);
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
+		glUniformMatrix4fv(m_outline_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(model->getModel()));
+		model->RenderOutline();
+
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	std::string ErrorString(GLenum error)
@@ -696,16 +706,13 @@ public:
 		if (abs(pitch) < 0.001) { pitch = 0; }
 		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
 
-		if (!observing)
-		{
-			glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
-			glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
-			glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
-			glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-			glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
-			player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
-			m_player_ship->Update(player_mat * player_scale);
-		}
+		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
+		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
+		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
+		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
+		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
+		player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
+		m_player_ship->Update(player_mat * player_scale);
 
 		//Player Particles
 		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.43f, -.05f, -.7f));
@@ -750,40 +757,41 @@ public:
 		//--------------------Solar System transform
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		planet_stack.push(t_offset * r_offset * tmat * rmat * smat);
+		planet_stack.push(std::make_pair("sun", t_offset * r_offset * tmat * rmat * smat));
 
 		m_sun_particle->emitParticles(dt, glm::vec3(0.f), glm::vec3(0.f));
 
 		//earth transform
 		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
 		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
-		planet_stack.push(planet_stack.top() * tmat * rmat * smat);
+		planet_stack.push(std::make_pair("earth", planet_stack.top().second * tmat * rmat * smat));
 
 		//moon transform
 		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .5f, .5f, .5f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
-		planet_stack.push(planet_stack.top() * tmat * rmat * smat);
+		planet_stack.push(std::make_pair("moon", planet_stack.top().second * tmat * rmat * smat));
 
 		//Find closest planet
-		std::stack<glm::mat4> planet_stack_copy = planet_stack;
-		std::vector<float> planet_distances;
+		std::stack<std::pair<std::string, glm::mat4>> planet_stack_copy = planet_stack;
+		std::vector<std::pair<std::string, float>> planet_distances;
 
 		while (!planet_stack_copy.empty())
 		{
-			planet_distances.push_back(glm::length(planet_stack_copy.top()[3] - player_mat[3]));
+			planet_distances.push_back(std::make_pair(planet_stack_copy.top().first, glm::length(planet_stack_copy.top().second[3] - player_mat[3])));
 			planet_stack_copy.pop();
 		}
 
-		auto shortest_distance_it = std::min_element(planet_distances.begin(), planet_distances.end());
-		float shortest_distance = *shortest_distance_it;
+		closest_planet = *std::min_element(planet_distances.begin(), planet_distances.end(),
+			[](const auto& a, const auto& b) { return a.second < b.second; });
+
 		planet_distances.clear();
-		std::cout << "Closest Planet: " << shortest_distance << std::endl;
+		std::cout << "Closest planet is: " << closest_planet.first << ", at a distance of: " << closest_planet.second << std::endl;
 
 		//Stack Updates
-		m_moon->Update(planet_stack.top());
+		m_moon->Update(planet_stack.top().second);
 		planet_stack.pop();
-		m_earth->Update(planet_stack.top());
+		m_earth->Update(planet_stack.top().second);
 		planet_stack.pop();
-		m_sun->Update(planet_stack.top());
+		m_sun->Update(planet_stack.top().second);
 		planet_stack.pop();
 	}
 };
