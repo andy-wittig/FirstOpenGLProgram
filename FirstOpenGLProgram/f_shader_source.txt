@@ -32,7 +32,7 @@ struct pointLight
 	float quadratic;
 };
 
-#define NR_POINT_LIGHTS 3
+#define NR_POINT_LIGHTS 4
 
 in vec3 frag_pos;
 in vec2 tex_coords;
@@ -66,7 +66,7 @@ void main()
 	}
 
 	//Emission
-	const float emission_amount = 5;
+	const float emission_amount = 4;
 
 	if (emissive)
 	{

@@ -83,6 +83,7 @@ private:
 	Model* m_point_light0;
 	Model* m_point_light1;
 	Model* m_point_light2;
+	Model* m_point_light3;
 	Model* m_dir_light;
 
 	//Scene Models
@@ -148,17 +149,24 @@ private:
 
 	glm::mat4 player_mat;
 
+	//Visting
 	const float SELECT_PLANET_RANGE = 65.f;
 	bool can_visit;
 	bool visiting;
 	std::pair<std::string, float> closest_planet;
+	glm::vec3 temp_camera_pos;
+	glm::vec3 temp_camera_rot;
 
 	void setShaderLights(Shader *shader)
 	{
-		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.08f, 0.08f, 0.08f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(.8f, .8f, .8f)));
-		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
+		//glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+		//glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.08f, 0.08f, 0.08f)));
+		//glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(.8f, .8f, .8f)));
+		//glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
+		glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
 
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].ambient"), 1, glm::value_ptr(glm::vec3(.1f, .1f, .1f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[0].diffuse"), 1, glm::value_ptr(glm::vec3(5.f, 5.f, 10.f)));
@@ -167,6 +175,7 @@ private:
 		glUniform1f(shader->GetUniformLocation("point_lights[0].linear"), 0.09f);
 		glUniform1f(shader->GetUniformLocation("point_lights[0].quadratic"), 0.032f);
 
+		//Player Engine Lights
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].ambient"), 1, glm::value_ptr(glm::vec3(0.25f, 0.25f, 0.25f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].diffuse"), 1, glm::value_ptr(glm::vec3(1.f, 1.f, 2.f)));
 		glUniform3fv(shader->GetUniformLocation("point_lights[1].specular"), 1, glm::value_ptr(glm::vec3(.4f, .4f, .4f)));
@@ -180,6 +189,14 @@ private:
 		glUniform1f(shader->GetUniformLocation("point_lights[2].constant"), 1.5f);
 		glUniform1f(shader->GetUniformLocation("point_lights[2].linear"), 0.3f);
 		glUniform1f(shader->GetUniformLocation("point_lights[2].quadratic"), 0.05f);
+
+		//Sun Light
+		glUniform3fv(shader->GetUniformLocation("point_lights[3].ambient"), 1, glm::value_ptr(glm::vec3(.22f, .35f, .7f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[3].diffuse"), 1, glm::value_ptr(glm::vec3(9.5f, 6.6f, 2.f)));
+		glUniform3fv(shader->GetUniformLocation("point_lights[3].specular"), 1, glm::value_ptr(glm::vec3(.97f, .95f, .72f)));
+		glUniform1f(shader->GetUniformLocation("point_lights[3].constant"), 0.1f);
+		glUniform1f(shader->GetUniformLocation("point_lights[3].linear"), 0.02f);
+		glUniform1f(shader->GetUniformLocation("point_lights[3].quadratic"), 0.00025f);
 	}
 
 public:
@@ -256,7 +273,7 @@ public:
 
 		srand(time(0)); //Update seed of random number generator based on current time.
 
-		//-------------------- Asteroid
+		//-------------------- Asteroids
 		float radius = 125.0;
 		float offset = 15.f;
 		for (int i = 0; i < asteroid_amount; i++)
@@ -288,12 +305,8 @@ public:
 		m_asteroid = new Model("models/asteroid/asteroid.obj", asteroidMatrices);
 		
 		//-------------------- Solar System
-		float angle = glm::linearRand(0.0f, 360.0f);
-		//float tvec1 = glm::linearRand(-5.0f, 5.0f);
-		//float tvec2 = glm::linearRand(1.0f, 5.0f);
-		//float tvec3 = glm::linearRand(-5.0f, 5.0f);
-
 		glm::vec3 axis;
+		float angle = glm::linearRand(0.0f, 360.0f);
 		int rand_axis_choice = rand() % 3; //Ranges from (0-2).
 
 		switch (rand_axis_choice)
@@ -320,6 +333,7 @@ public:
 		m_point_light0 = new Model("models/lightbulb/lightbulb.obj");
 		m_point_light1 = new Model("models/lightbulb/lightbulb.obj");
 		m_point_light2 = new Model("models/lightbulb/lightbulb.obj");
+		m_point_light3 = new Model("models/lightbulb/lightbulb.obj");
 
 		m_dir_light = new Model("models/lightbulb/lightbulb.obj");
 		m_dir_light->setPosition(glm::vec3(0.f, 35.f, 0.f));
@@ -418,7 +432,7 @@ public:
 			}
 		}
 
-		//Shader Light Settings
+		//Shader Settings
 		m_shader->Enable();
 		setShaderLights(m_shader);
 
@@ -456,10 +470,11 @@ public:
 
 		m_shader->Enable();
 		glUniform3fv(m_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
+		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(m_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
-		glUniform1f(m_shader->GetUniformLocation("material.alpha"), 1.0);
+		glUniform3fv(m_shader->GetUniformLocation("point_lights[3].position"), 1, glm::value_ptr(m_point_light3->getPosition()));
 
 		glUniformMatrix4fv(m_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
@@ -469,9 +484,12 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
 		m_spaceship->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
-		m_player_ship->Render(*m_shader);
+		if (!visiting)
+		{
+			glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
+			glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
+			m_player_ship->Render(*m_shader);
+		}
 
 		//Planets
 		glUniform1f(m_shader->GetUniformLocation("emissive"), true);
@@ -491,18 +509,20 @@ public:
 		glStencilMask(0x00);
 
 		//Procedurals
+		/*
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_procedural_sphere->getModel()));
 		m_procedural_sphere->Render(*m_shader);
+		*/
 
 		//-------------------- Render Instances
 		m_instance_shader->Enable();
-
 		glUniform3fv(m_instance_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
+		glUniform1f(m_instance_shader->GetUniformLocation("material.alpha"), 1.0);
 		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
 		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
 		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
-		glUniform1f(m_instance_shader->GetUniformLocation("material.alpha"), 1.0);
+		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[3].position"), 1, glm::value_ptr(m_point_light3->getPosition()));
 
 		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 45.f);
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
@@ -513,7 +533,6 @@ public:
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-
 		/*
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
 		m_dir_light->Render(*m_light_shader);
@@ -524,6 +543,8 @@ public:
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
 		m_point_light2->Render(*m_light_shader);
 		*/
+		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light3->getModel()));
+		m_point_light3->Render(*m_light_shader);
 
 		//-------------------- Render Outlines
 		can_visit = closest_planet.second <= SELECT_PLANET_RANGE;
@@ -539,9 +560,12 @@ public:
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		
-		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .08f);
-		m_engine_particle1->Render(*m_particle_shader);
-		m_engine_particle2->Render(*m_particle_shader);
+		if (!visiting)
+		{
+			glUniform1f(m_particle_shader->GetUniformLocation("scale"), .08f);
+			m_engine_particle1->Render(*m_particle_shader);
+			m_engine_particle2->Render(*m_particle_shader);
+		}
 
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.f);
 		m_sun_particle->Render(*m_particle_shader);
@@ -668,12 +692,16 @@ public:
 		if (can_visit && !visiting)
 		{
 			visiting = true;
-			std::cout << "Entered the planet: " << closest_planet.first << std::endl;
+			temp_camera_pos = m_camera->getPosition();
+			temp_camera_rot = m_camera->getRotation();
+			//std::cout << "Entered the planet: " << closest_planet.first << std::endl;
 		}
 		else if (visiting)
 		{
 			visiting = false;
-			std::cout << "Leaving the planet: " << closest_planet.first << std::endl;
+			m_camera->setPosition(temp_camera_pos);
+			m_camera->setRotation(temp_camera_rot);
+			//std::cout << "Leaving the planet: " << closest_planet.first << std::endl;
 		}
 	}
 
