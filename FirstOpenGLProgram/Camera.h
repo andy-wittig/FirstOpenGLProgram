@@ -22,6 +22,8 @@ private:
 	const float FRICTION = 2.5f;
 	float camera_speed;
 	float mouse_sensitivity = 100.0f;
+	float rot_x;
+	float rot_y;
 
 	float far_plane_dist = 500.f;
 	float near_plane_dist = 0.01f;
@@ -40,10 +42,6 @@ public:
 	void MouseLook(double mouse_x, double mouse_y)
 	{
 		//std::cout << "X: " << mouse_x << ", Y: " << mouse_y << std::endl;
-
-		float rot_x = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
-		float rot_y = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
-
 		glm::vec3 new_orientation = glm::rotate(orientation, glm::radians(-rot_x), glm::normalize(glm::cross(orientation, up_dir)));
 
 		if (abs(glm::angle(new_orientation, up_dir) - glm::radians(90.0f)) <= glm::radians(85.0f))
@@ -104,6 +102,17 @@ public:
 	glm::vec3 getRotation()
 	{
 		return orientation;
+	}
+
+	std::pair<float, float> getMouseRot()
+	{
+		return std::make_pair(rot_x, rot_y);
+	}
+
+	void setMouseRot(double mouse_x, double mouse_y)
+	{
+		rot_x = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
+		rot_y = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
 	}
 
 	glm::mat4 GetProjection()

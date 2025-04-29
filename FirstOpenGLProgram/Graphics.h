@@ -156,6 +156,8 @@ private:
 	std::pair<std::string, float> closest_planet;
 	glm::vec3 temp_camera_pos;
 	glm::vec3 temp_camera_rot;
+	float mouse_yaw;
+	float mouse_pitch;
 
 	void setShaderLights(Shader *shader)
 	{
@@ -662,29 +664,33 @@ public:
 
 	void UpdateMousePos(double x, double y, double dt)
 	{
-		if (x < screen_width / 2)
-		{
-			roll -= roll_speed * dt;
-			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
-		}
-		else if (x > screen_width / 2)
-		{
-			roll += roll_speed * dt;
-			roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
-		}
+		m_camera->setMouseRot(x, y);
 
-		if (y < screen_height / 2)
+		if (!visiting)
 		{
-			pitch += pitch_speed * dt;
-			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
-		}
-		else if (y > screen_height / 2)
-		{
-			pitch -= pitch_speed * dt;
-			pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
-		}
+			if (x < screen_width / 2)
+			{
+				roll -= roll_speed * dt;
+				roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+			}
+			else if (x > screen_width / 2)
+			{
+				roll += roll_speed * dt;
+				roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
+			}
 
-		m_camera->MouseLook(x, y);
+			if (y < screen_height / 2)
+			{
+				pitch += pitch_speed * dt;
+				pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
+			}
+			else if (y > screen_height / 2)
+			{
+				pitch -= pitch_speed * dt;
+				pitch = std::min(PITCH_MAX, std::max(-PITCH_MAX, pitch));
+			}
+			m_camera->MouseLook(x, y);
+		}
 	}
 
 	void visitPlanet()
@@ -730,6 +736,19 @@ public:
 		roll = std::min(ROLL_MAX, std::max(-ROLL_MAX, roll));
 	}
 
+	void viewPlanet(Model* model, float dist, double delta_time)
+	{
+		mouse_pitch += m_camera->getMouseRot().first * delta_time;
+		mouse_yaw += m_camera->getMouseRot().second * delta_time;
+		mouse_pitch = glm::clamp(mouse_pitch, -glm::radians(60.0f), glm::radians(60.0f));
+
+		glm::vec3 view_dir = glm::vec3(dist * -cos(mouse_pitch) * sin(mouse_yaw), dist * sin(mouse_pitch), dist * cos(mouse_pitch) * cos(mouse_yaw));
+		glm::vec3 current_visit_pos = model->getPosition() + view_dir;
+
+		m_camera->setPosition(current_visit_pos);
+		m_camera->setRotation(glm::normalize(model->getPosition() - current_visit_pos));
+	}
+
 	void computeTransforms(double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotation_speed, std::vector<float> scale,
 		glm::vec3 rotation_vector, glm::mat4 &tmat, glm::mat4 &rmat, glm::mat4 &smat)
 	{
@@ -751,7 +770,7 @@ public:
 		if (abs(pitch) < 0.001) { pitch = 0; }
 		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
 
-		if (!visiting) //Player has control
+		if (!visiting)
 		{
 			glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
 			glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
@@ -761,29 +780,11 @@ public:
 			player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
 			m_player_ship->Update(player_mat * player_scale);
 		}
-		else //In visiting mode
+		else
 		{
-			if (closest_planet.first == "sun")
-			{
-				m_camera->setPosition(m_sun->getPosition() + glm::vec3(65.f, 0.f, 0.f));
-				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
-				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
-				m_camera->setRotation(glm::normalize(cam_direction));
-			}
-			if (closest_planet.first == "earth")
-			{
-				m_camera->setPosition(m_earth->getPosition() + glm::vec3(25.f, 0.f, 0.f));
-				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
-				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
-				m_camera->setRotation(glm::normalize(cam_direction));
-			}
-			if (closest_planet.first == "moon")
-			{
-				m_camera->setPosition(m_moon->getPosition() + glm::vec3(5.f, 0.f, 0.f));
-				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
-				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
-				m_camera->setRotation(glm::normalize(cam_direction));
-			}
+			if (closest_planet.first == "sun") { viewPlanet(m_sun, 65.f, dt); }
+			else if (closest_planet.first == "earth") { viewPlanet(m_earth, 25.f, dt); }
+			else if (closest_planet.first == "moon") { viewPlanet(m_moon, 8.f, dt); }
 		}
 
 		//Player Particles
