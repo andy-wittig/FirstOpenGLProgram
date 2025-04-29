@@ -7,6 +7,7 @@
 #include "Graphics.h"
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 const float MAX_FOV = 80.0f;
 float fov = MAX_FOV;
 
@@ -29,6 +30,7 @@ private:
 
 	double last_mouse_x, last_mouse_y;
 	bool first_click = true;
+	bool first_press;
 
 	glm::vec3 position;
 	float rotation;
@@ -68,6 +70,7 @@ public:
 		}
 
 		glfwSetScrollCallback(m_window->getWindow(), scroll_callback);
+		glfwSetKeyCallback(m_window->getWindow(), key_callback);
 		
 		return true;
 	}
@@ -127,6 +130,17 @@ public:
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) { m_graphics->MoveCameraLeft(delta_time); }
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) { m_graphics->MoveCameraRight(delta_time); }
 
+		int state = glfwGetKey(m_window->getWindow(), GLFW_KEY_V);
+		if (state == GLFW_PRESS && !first_press)
+		{
+			m_graphics->visitPlanet();
+			first_press = true;
+		}
+		else if (state == GLFW_RELEASE)
+		{
+			first_press = false;
+		}
+
 		//Exit Window
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
@@ -134,6 +148,11 @@ public:
 		}
 	}
 };
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	//get keys!
+}
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {

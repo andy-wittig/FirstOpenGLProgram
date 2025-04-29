@@ -86,6 +86,16 @@ public:
 		velocity += glm::normalize(glm::cross(orientation, up_dir));
 	}
 
+	void setPosition(glm::vec3 new_position)
+	{
+		camera_pos = new_position;
+	}
+
+	void setRotation(glm::vec3 new_rotation)
+	{
+		orientation = new_rotation;
+	}
+
 	glm::vec3 getPosition()
 	{
 		return camera_pos;

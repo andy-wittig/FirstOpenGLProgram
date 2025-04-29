@@ -149,6 +149,8 @@ private:
 	glm::mat4 player_mat;
 
 	const float SELECT_PLANET_RANGE = 65.f;
+	bool can_visit;
+	bool visiting;
 	std::pair<std::string, float> closest_planet;
 
 	void setShaderLights(Shader *shader)
@@ -524,7 +526,8 @@ public:
 		*/
 
 		//-------------------- Render Outlines
-		if (closest_planet.second <= SELECT_PLANET_RANGE)
+		can_visit = closest_planet.second <= SELECT_PLANET_RANGE;
+		if (can_visit && !visiting)
 		{
 			if (closest_planet.first == "sun") { drawOutline(m_sun); }
 			else if (closest_planet.first == "earth") { drawOutline(m_earth); }
@@ -660,6 +663,20 @@ public:
 		m_camera->MouseLook(x, y);
 	}
 
+	void visitPlanet()
+	{
+		if (can_visit && !visiting)
+		{
+			visiting = true;
+			std::cout << "Entered the planet: " << closest_planet.first << std::endl;
+		}
+		else if (visiting)
+		{
+			visiting = false;
+			std::cout << "Leaving the planet: " << closest_planet.first << std::endl;
+		}
+	}
+
 	void MoveCameraForward(double dt)
 	{
 		m_camera->MoveForward();
@@ -706,13 +723,40 @@ public:
 		if (abs(pitch) < 0.001) { pitch = 0; }
 		else { pitch = lerp(pitch, 0.f, PITCH_DECAY * dt); }
 
-		glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
-		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
-		glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
-		glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-		glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
-		player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
-		m_player_ship->Update(player_mat * player_scale);
+		if (!visiting) //Player has control
+		{
+			glm::mat4 player_translation = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.8f, 1.8f));
+			glm::mat4 player_rotation = glm::rotate(glm::mat4(1.f), glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
+			glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
+			glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
+			player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
+			m_player_ship->Update(player_mat * player_scale);
+		}
+		else //In visiting mode
+		{
+			if (closest_planet.first == "sun")
+			{
+				m_camera->setPosition(m_sun->getPosition() + glm::vec3(65.f, 0.f, 0.f));
+				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
+				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
+				m_camera->setRotation(glm::normalize(cam_direction));
+			}
+			if (closest_planet.first == "earth")
+			{
+				m_camera->setPosition(m_earth->getPosition() + glm::vec3(25.f, 0.f, 0.f));
+				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
+				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
+				m_camera->setRotation(glm::normalize(cam_direction));
+			}
+			if (closest_planet.first == "moon")
+			{
+				m_camera->setPosition(m_moon->getPosition() + glm::vec3(5.f, 0.f, 0.f));
+				glm::mat4 cam_rmat = glm::rotate(glm::mat4(1.0f), glm::radians(-90.f), glm::vec3(0.f, 1.f, 0.f));
+				glm::vec3 cam_direction = glm::vec3(cam_rmat * glm::vec4(0.f, 0.f, 1.f, 0.f));
+				m_camera->setRotation(glm::normalize(cam_direction));
+			}
+		}
 
 		//Player Particles
 		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.43f, -.05f, -.7f));
@@ -770,21 +814,23 @@ public:
 		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .5f, .5f, .5f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
 		planet_stack.push(std::make_pair("moon", planet_stack.top().second * tmat * rmat * smat));
 
-		//Find closest planet
-		std::stack<std::pair<std::string, glm::mat4>> planet_stack_copy = planet_stack;
-		std::vector<std::pair<std::string, float>> planet_distances;
-
-		while (!planet_stack_copy.empty())
+		if (!visiting) //Find closest planet
 		{
-			planet_distances.push_back(std::make_pair(planet_stack_copy.top().first, glm::length(planet_stack_copy.top().second[3] - player_mat[3])));
-			planet_stack_copy.pop();
+			std::stack<std::pair<std::string, glm::mat4>> planet_stack_copy = planet_stack;
+			std::vector<std::pair<std::string, float>> planet_distances;
+
+			while (!planet_stack_copy.empty())
+			{
+				planet_distances.push_back(std::make_pair(planet_stack_copy.top().first, glm::length(planet_stack_copy.top().second[3] - player_mat[3])));
+				planet_stack_copy.pop();
+			}
+
+			closest_planet = *std::min_element(planet_distances.begin(), planet_distances.end(),
+				[](const auto& a, const auto& b) { return a.second < b.second; });
+
+			planet_distances.clear();
+			//std::cout << "Closest planet is: " << closest_planet.first << ", at a distance of: " << closest_planet.second << std::endl;
 		}
-
-		closest_planet = *std::min_element(planet_distances.begin(), planet_distances.end(),
-			[](const auto& a, const auto& b) { return a.second < b.second; });
-
-		planet_distances.clear();
-		std::cout << "Closest planet is: " << closest_planet.first << ", at a distance of: " << closest_planet.second << std::endl;
 
 		//Stack Updates
 		m_moon->Update(planet_stack.top().second);
