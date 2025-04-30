@@ -127,5 +127,8 @@
     <Text Include="f_outline_shader.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
+    <Text Include="f_texture_shader.txt">
+      <Filter>Source Files\shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

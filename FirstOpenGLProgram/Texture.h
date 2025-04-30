@@ -9,40 +9,40 @@ class Texture
 {
 private:
 	unsigned int diffuse_map = 0;
-	unsigned int specular_map = 0;
 	unsigned int cube_map = 0;
 
 public:
-	void Initialize(const char* diffuse_map_path, const char* specular_map_path)
+	void Initialize(const char* diffuse_map_path)
 	{
 		diffuse_map = loadTexture(diffuse_map_path);
-		specular_map = loadTexture(specular_map_path);
 	}
 
-	void Initialize(std::vector<std::string> texture_faces_path)
+	void InitializeCubeMap(std::vector<std::string> texture_faces_path)
 	{
 		cube_map = loadCubeMapTexture(texture_faces_path);
 	}
 
 	unsigned int loadTexture(const char* texture_path)
 	{
-		int width, height, nr_color_channels;
-
+		int width, height, nrComponents;
 		unsigned int texture;
 		glGenTextures(1, &texture);
 
 		stbi_set_flip_vertically_on_load(true);
-		//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 		//Load Texture
-		unsigned char* data = stbi_load(texture_path, &width, &height, &nr_color_channels, 3);
+		unsigned char* data = stbi_load(texture_path, &width, &height, &nrComponents, 0);
 		if (data)
 		{
+			GLenum format;
+			if (nrComponents == 1) { format = GL_RED; }
+			else if (nrComponents == 3) { format = GL_RGB; }
+			else if (nrComponents == 4) { format = GL_RGBA; }
+
 			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 
-			//Wrapping and Filtering
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -52,10 +52,9 @@ public:
 		}
 		else
 		{
-			std::cerr << "Failed to Load Texture!" << stbi_failure_reason() << std::endl;
+			std::cout << "Texture failed to load at path: " << texture_path << std::endl;
 			stbi_image_free(data);
 		}
-		
 		return texture;
 	}
 
@@ -92,15 +91,10 @@ public:
 		return texture;
 	}
 
-	void bindTextures(Shader &shader)
+	void bindTextures()
 	{
-		glUniform1i(shader.GetUniformLocation("material.texture_diffuse1"), 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuse_map);
-
-		glUniform1i(shader.GetUniformLocation("material.texture_specular1"), 1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specular_map);
 	}
 
 	void bindCubeMapTextures()

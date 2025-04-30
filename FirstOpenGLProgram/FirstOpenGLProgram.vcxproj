@@ -162,6 +162,7 @@
     <Text Include="f_cube_map_shader_source.txt" />
     <Text Include="f_hdr_shader.txt" />
     <Text Include="f_outline_shader.txt" />
+    <Text Include="f_texture_shader.txt" />
     <Text Include="f_shader_source.txt" />
     <Text Include="pyramid.txt" />
     <Text Include="quad.txt" />

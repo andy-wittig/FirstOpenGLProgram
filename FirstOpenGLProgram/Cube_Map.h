@@ -50,7 +50,7 @@ public:
 
 		//Load Textures
 		m_cube_map_texture = new Texture();
-		m_cube_map_texture->Initialize(texture_faces_path);
+		m_cube_map_texture->InitializeCubeMap(texture_faces_path);
 	}
 
 	void Render()

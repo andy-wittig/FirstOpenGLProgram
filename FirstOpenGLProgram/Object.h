@@ -61,13 +61,14 @@ public:
 
 		//Load Textures
 		m_texture = new Texture();
-		m_texture->Initialize(diffuse_map_path, specular_map_path);
+		m_texture->Initialize(diffuse_map_path);
 	}
 
 	void Render(Shader &shader)
 	{
 		glBindVertexArray(VAO);
-		m_texture->bindTextures(shader);
+		glUniform1i(shader.GetUniformLocation("material.texture_diffuse1"), 0);
+		m_texture->bindTextures();
 		glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}

@@ -10,6 +10,7 @@
 #include "Model.h"
 #include "Sphere.h"
 #include "Emitter.h"
+#include "Texture.h"
 
 float lerp(float start, float end, float f)
 {
@@ -78,6 +79,7 @@ private:
 	Shader* m_hdr_shader;
 	Shader* m_particle_shader;
 	Shader* m_outline_shader;
+	Shader* m_texture_shader;
 
 	//Light Models
 	Model* m_point_light0;
@@ -95,8 +97,9 @@ private:
 
 	CubeMap* m_skybox;
 
+	Texture* m_console_texture;
+
 	//Procedural Models
-	Sphere* m_procedural_sphere;
 
 	//Particle Emitters
 	Emitter* m_engine_particle1;
@@ -233,6 +236,7 @@ public:
 		m_hdr_shader = new Shader();
 		m_particle_shader = new Shader();
 		m_outline_shader = new Shader();
+		m_texture_shader = new Shader();
 
 		std::map<Shader*, std::pair<std::string, std::string>> shader_map
 		{
@@ -244,6 +248,7 @@ public:
 			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}},
 			{m_particle_shader, {"v_particle_shader.txt", "f_particle_shader.txt"}},
 			{m_outline_shader, {"v_outline_shader.txt", "f_outline_shader.txt"}},
+			{m_texture_shader, {"v_hdr_shader.txt", "f_texture_shader.txt"}}
 		};
 
 		for (const auto& shader_entry : shader_map)
@@ -359,8 +364,8 @@ public:
 		m_spaceship = new Model("models/carrier/carrier.obj");
 		m_player_ship = new Model("models/starship/starship.obj");
 
-		m_procedural_sphere = new Sphere();
-		m_procedural_sphere->Initialize("textures/crystal.png", "textures/crystal_specular_map.png");
+		m_console_texture = new Texture();
+		m_console_texture->Initialize("textures/spaceship_cockpit.png");
 
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
@@ -510,13 +515,6 @@ public:
 
 		glStencilMask(0x00);
 
-		//Procedurals
-		/*
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
-		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_procedural_sphere->getModel()));
-		m_procedural_sphere->Render(*m_shader);
-		*/
-
 		//-------------------- Render Instances
 		m_instance_shader->Enable();
 		glUniform3fv(m_instance_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
@@ -561,7 +559,7 @@ public:
 		m_particle_shader->Enable();
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 		glUniformMatrix4fv(m_particle_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		
+
 		if (!visiting)
 		{
 			glUniform1f(m_particle_shader->GetUniformLocation("scale"), .08f);
@@ -574,6 +572,14 @@ public:
 
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .5f);
 		m_ship_particle->Render(*m_particle_shader);
+
+		//Screen Textures
+		if (visiting)
+		{
+			m_texture_shader->Enable();
+			m_console_texture->bindTextures();
+			renderQuad();
+		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

@@ -40,7 +40,7 @@ private:
 	}
 
 public:
-	void Initialize(const char* diffuse_map_path, const char* specular_map_path)
+	void Initialize(const char* diffuse_map_path)
 	{
 		int num_vertices = (precision + 1) * (precision + 1);
 		int num_indices = precision * precision * 6;
@@ -87,7 +87,7 @@ public:
 
 		//Load Textures
 		m_texture = new Texture();
-		m_texture->Initialize(diffuse_map_path, specular_map_path);
+		m_texture->Initialize(diffuse_map_path);
 	}
 };
 
