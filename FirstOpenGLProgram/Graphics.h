@@ -104,7 +104,6 @@ private:
 
 	//Shaders
 	Shader* m_shader;
-	Shader* m_instance_shader;
 	Shader* m_light_shader;
 	Shader* m_skybox_shader;
 	Shader* m_blur_shader;
@@ -257,7 +256,6 @@ public:
 
 		//Initialize Shaders
 		m_shader = new Shader();
-		m_instance_shader = new Shader();
 		m_light_shader = new Shader();
 		m_skybox_shader = new Shader();
 		m_blur_shader = new Shader;
@@ -269,7 +267,6 @@ public:
 		std::map<Shader*, std::pair<std::string, std::string>> shader_map
 		{
 			{m_shader, {"shaders/vertex/v_shader.txt", "shaders/fragment/f_shader.txt"}},
-			{m_instance_shader, {"shaders/vertex/v_instance_shader.txt", "shaders/fragment/f_shader.txt"}},
 			{m_light_shader, {"shaders/vertex/v_light_shader.txt", "shaders/fragment/f_light_shader.txt"}},
 			{m_skybox_shader, {"shaders/vertex/v_cube_map_shader.txt", "shaders/fragment/f_cube_map_shader.txt"}},
 			{m_blur_shader, {"shaders/vertex/v_hdr_shader.txt", "shaders/fragment/f_blur_shader.txt"}},
@@ -310,7 +307,7 @@ public:
 
 		//-------------------- Asteroids
 		m_asteroid_belt1 = new Model("models/asteroid/asteroid.obj", generateAsteroidMatrices(500, 15.f, 125.f));
-		m_asteroid_belt2 = new Model("models/asteroid/asteroid.obj", generateAsteroidMatrices(500, 35.f, 200.f));
+		m_asteroid_belt2 = new Model("models/asteroid/asteroid.obj", generateAsteroidMatrices(1000, 30.f, 225.f));
 		
 		//-------------------- Solar System
 		glm::vec3 axis;
@@ -444,9 +441,6 @@ public:
 		m_shader->Enable();
 		setShaderLights(m_shader);
 
-		m_instance_shader->Enable();
-		setShaderLights(m_instance_shader);
-
 		m_blur_shader->Enable();
 		glUniform1i(m_blur_shader->GetUniformLocation("image"), 0);
 
@@ -516,21 +510,14 @@ public:
 
 		glStencilMask(0x00);
 
-		//-------------------- Render Instances
-		m_instance_shader->Enable();
-		glUniform3fv(m_instance_shader->GetUniformLocation("view_pos"), 1, glm::value_ptr(m_camera->getPosition()));
-		glUniform1f(m_instance_shader->GetUniformLocation("material.alpha"), 1.0);
-		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[0].position"), 1, glm::value_ptr(m_point_light0->getPosition()));
-		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[1].position"), 1, glm::value_ptr(m_point_light1->getPosition()));
-		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[2].position"), 1, glm::value_ptr(m_point_light2->getPosition()));
-		glUniform3fv(m_instance_shader->GetUniformLocation("point_lights[3].position"), 1, glm::value_ptr(m_point_light3->getPosition()));
+		// Instancing
+		glUniform1i(m_shader->GetUniformLocation("use_instancing"), true);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 45.f);
+		m_asteroid_belt1->Render(*m_shader);
+		m_asteroid_belt2->Render(*m_shader);
+		glUniform1i(m_shader->GetUniformLocation("use_instancing"), false);
 
-		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 45.f);
-		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
-		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		m_asteroid_belt1->Render(*m_instance_shader);
-		m_asteroid_belt2->Render(*m_instance_shader);
-
+		
 		//-------------------- Render Lights
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
@@ -559,7 +546,7 @@ public:
 			m_engine_particle2->Render(*m_particle_shader);
 		}
 
-		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.f);
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.5f);
 		m_sun_particle->Render(*m_particle_shader);
 
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .5f);

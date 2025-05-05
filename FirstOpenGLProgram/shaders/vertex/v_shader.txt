@@ -5,25 +5,39 @@ layout (location = 1) in vec3 v_normal;
 layout (location = 2) in vec2 v_tex_coords;
 layout (location = 3) in vec3 v_tangent;
 layout (location = 4) in vec3 v_bitangent;
+layout (location = 5) in mat4 instanceMatrix;
 
 out vec3 frag_pos;
 out vec2 tex_coords;
 out mat3 tbn;
 
+uniform bool use_instancing = false; //Turn off by default
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 void main() 
 {
-	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
-	vec3 n = normalize(normalMatrix * v_normal);
-	vec3 t = normalize(normalMatrix * v_tangent);
-	vec3 b = normalize(cross(n, t));
-	tbn = mat3(t, b, n);
+	if (!use_instancing)
+	{ //Non-Instanced Models
+		mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+		vec3 n = normalize(normalMatrix * v_normal);
+		vec3 t = normalize(normalMatrix * v_tangent);
+		vec3 b = normalize(cross(n, t));
+		tbn = mat3(t, b, n);
+		frag_pos = vec3(modelMatrix * vec4(v_position, 1.0));
+	}
+	else
+	{ //Instansed Models
+		mat3 normalMatrix = transpose(inverse(mat3(instanceMatrix)));
+		vec3 n = normalize(normalMatrix * v_normal);
+		vec3 t = normalize(normalMatrix * v_tangent);
+		vec3 b = normalize(cross(n, t));
+		tbn = mat3(t, b, n);
+		frag_pos = vec3(instanceMatrix * vec4(v_position, 1.0)); 
+	}
 
-	frag_pos = vec3(modelMatrix * vec4(v_position, 1.0));
-	tex_coords = v_tex_coords; 
+	tex_coords = v_tex_coords;
 
 	gl_Position = projectionMatrix * viewMatrix * vec4(frag_pos, 1.0);
 };
