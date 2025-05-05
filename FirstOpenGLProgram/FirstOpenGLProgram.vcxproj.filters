@@ -79,18 +79,6 @@
     <Text Include="f_light_shader_source.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
-    <Text Include="quad.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
-    <Text Include="cube.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
-    <Text Include="pyramid.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
-    <Text Include="crystal.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
     <Text Include="f_cube_map_shader_source.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
@@ -98,9 +86,6 @@
       <Filter>Source Files\shaders</Filter>
     </Text>
     <Text Include="skybox.txt">
-      <Filter>Source Files\models</Filter>
-    </Text>
-    <Text Include="lightbulb.txt">
       <Filter>Source Files\models</Filter>
     </Text>
     <Text Include="v_instance_shader.txt">

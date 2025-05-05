@@ -10,6 +10,12 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 const float MAX_FOV = 80.0f;
 float fov = MAX_FOV;
+float EXTRA_FOV = 10.f;
+float temp_fov = fov;
+float zoom_amount;
+const float ZOOM_SPEED = 20;
+const float EXTRA_CAMERA_SPEED = .2f;
+bool accelerate_mode = false;
 
 class Engine 
 {
@@ -125,10 +131,31 @@ public:
 			first_click = true;
 		}
 
+		//Control Movement
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) { m_graphics->MoveCameraForward(delta_time); }
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_S) == GLFW_PRESS) { m_graphics->MoveCameraBackward(delta_time); }
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) { m_graphics->MoveCameraLeft(delta_time); }
 		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) { m_graphics->MoveCameraRight(delta_time); }
+
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		{	
+			m_graphics->setExtraCameraSpeed(EXTRA_CAMERA_SPEED);
+			if (!accelerate_mode)
+			{
+				temp_fov = fov;
+				accelerate_mode = true;
+			}
+			fov = glm::mix(fov, temp_fov + EXTRA_FOV, 10 * delta_time);
+		}
+		else 
+		{
+			m_graphics->setExtraCameraSpeed(0.f);
+			if (accelerate_mode)
+			{
+				fov = glm::mix(fov, temp_fov, 10 * delta_time);
+				if (abs(fov - temp_fov) <= 0.1f) { accelerate_mode = false; }
+			}
+		}
 
 		int state = glfwGetKey(m_window->getWindow(), GLFW_KEY_V);
 		if (state == GLFW_PRESS && !first_press)
@@ -138,7 +165,21 @@ public:
 		}
 		else if (state == GLFW_RELEASE)
 		{
+			if (first_press) { zoom_amount = 0; } //reset zoom
 			first_press = false;
+		}
+
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_UP) == GLFW_PRESS)
+		{
+			zoom_amount += ZOOM_SPEED * delta_time;
+			zoom_amount = glm::clamp(zoom_amount, 0.f, 100.f);
+			m_graphics->setZoomDistance(zoom_amount);
+		}
+		if (glfwGetKey(m_window->getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
+		{
+			zoom_amount -= ZOOM_SPEED * delta_time;
+			zoom_amount = glm::clamp(zoom_amount, 0.f, 100.f);
+			m_graphics->setZoomDistance(zoom_amount);
 		}
 
 		//Exit Window
@@ -156,16 +197,15 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	fov -= (float)yoffset;
-
-	//Clamp FOV
-	if (fov < 1.0f)
+	if (!accelerate_mode)
 	{
-		fov = 1.0f;
+		fov -= (float)yoffset;
+		fov = glm::clamp(fov, 40.f, MAX_FOV);
 	}
-	if (fov > MAX_FOV)
+	else
 	{
-		fov = MAX_FOV;
+		fov -= (float)yoffset;
+		fov = glm::clamp(fov, 40.f, MAX_FOV + EXTRA_FOV);
 	}
 }
 

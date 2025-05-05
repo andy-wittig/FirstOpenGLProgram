@@ -19,6 +19,7 @@ private:
 	glm::vec3 up_dir = glm::vec3(0.0, 1.0, 0.0);
 
 	const float CAMERA_SPEED = .2f; //0.2 default
+	float extra_camera_speed;
 	const float FRICTION = 2.5f;
 	float camera_speed;
 	float mouse_sensitivity = 100.0f;
@@ -42,20 +43,18 @@ public:
 	void MouseLook(double mouse_x, double mouse_y)
 	{
 		//std::cout << "X: " << mouse_x << ", Y: " << mouse_y << std::endl;
-		glm::vec3 new_orientation = glm::rotate(orientation, glm::radians(-rot_x), glm::normalize(glm::cross(orientation, up_dir)));
+		glm::vec3 new_orientation = glm::rotate(orientation, glm::radians(-rot_y), glm::normalize(glm::cross(orientation, up_dir)));
 
 		if (abs(glm::angle(new_orientation, up_dir) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
 			orientation = new_orientation;
 		}
 
-		orientation = glm::rotate(orientation, glm::radians(-rot_y), up_dir);
+		orientation = glm::rotate(orientation, glm::radians(-rot_x), up_dir);
 	}
 
 	void Update(float dt)
 	{
-		camera_speed = CAMERA_SPEED * dt; //Delta time keeps the camera's speed consistent across machines.
-
 		if (glm::length(velocity) < 0.0001) { velocity = glm::vec3(0.0f); }
 		else 
 		{ 
@@ -64,16 +63,21 @@ public:
 			velocity.z = glm::mix(velocity.z, 0.f, FRICTION * dt);
 		}
 
-		camera_pos += velocity * camera_speed;
+		camera_pos += velocity * (CAMERA_SPEED + extra_camera_speed) * dt; //Delta time keeps the camera's speed consistent across machines.
+	}
+
+	void setExtraSpeed(float speed)
+	{
+		extra_camera_speed = speed;
 	}
 
 	void MoveForward()
 	{
-		velocity += orientation;
+		velocity += glm::normalize(orientation);
 	}
 	void MoveBackward()
 	{
-		velocity -= orientation;
+		velocity -= glm::normalize(orientation);
 	}
 	void MoveLeft()
 	{
@@ -111,8 +115,8 @@ public:
 
 	void setMouseRot(double mouse_x, double mouse_y)
 	{
-		rot_x = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
-		rot_y = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
+		rot_x = mouse_sensitivity * (float)(mouse_x - (screen_width / 2)) / screen_width;
+		rot_y = mouse_sensitivity * (float)(mouse_y - (screen_height / 2)) / screen_height;
 	}
 
 	glm::mat4 GetProjection()

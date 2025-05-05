@@ -65,6 +65,38 @@ void renderQuad()
 	glBindVertexArray(0);
 }
 
+std::vector<glm::mat4> generateAsteroidMatrices(int amount, float offset, float radius)
+{
+	std::vector<glm::mat4> asteroidMatrices;
+	for (int i = 0; i < amount; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+
+		//Random Translation
+		float angle = (float)(i) / (float)(amount) * 360.f;
+
+		float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float x = cos(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float z = sin(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float y = displacement * 0.1f;
+
+		model = glm::translate(model, glm::vec3(x, y, z));
+
+		//Random Scale
+		float scale = (rand() % 6) / 10.f + 0.5f;
+		model = glm::scale(model, glm::vec3(scale));
+
+		//Random Rotation
+		float rotation_angle = (rand() % 361);
+		model = glm::rotate(model, rotation_angle, glm::vec3(0.f, 1.f, 0.f));
+
+		asteroidMatrices.push_back(model);
+	}
+	return asteroidMatrices;
+}
+
 class Graphics
 {
 private:
@@ -95,8 +127,12 @@ private:
 	Model* m_earth;
 	Model* m_moon;
 
-	CubeMap* m_skybox;
+	//Asteroid Instance Variables
+	Model* m_asteroid_belt1;
+	Model* m_asteroid_belt2;
 
+	//Misc
+	CubeMap* m_skybox;
 	Texture* m_console_texture;
 
 	//Procedural Models
@@ -131,11 +167,6 @@ private:
 	unsigned int rboDepth;
 	unsigned int rboStencil;
 
-	//Asteroid Instance Variables
-	static const int asteroid_amount = 600;
-	std::vector<glm::mat4> asteroidMatrices;
-	Model* m_asteroid;
-
 	//Player Ship
 	int screen_width;
 	int screen_height;
@@ -161,13 +192,10 @@ private:
 	glm::vec3 temp_camera_rot;
 	float mouse_yaw;
 	float mouse_pitch;
+	float zoom_distance;
 
 	void setShaderLights(Shader *shader)
 	{
-		//glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-		//glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.08f, 0.08f, 0.08f)));
-		//glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(.8f, .8f, .8f)));
-		//glUniform3fv(shader->GetUniformLocation("dir_light.specular"), 1, glm::value_ptr(glm::vec3(0.4f, 0.4f, 0.4f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.direction"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.ambient"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
 		glUniform3fv(shader->GetUniformLocation("dir_light.diffuse"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
@@ -240,15 +268,15 @@ public:
 
 		std::map<Shader*, std::pair<std::string, std::string>> shader_map
 		{
-			{m_shader, {"v_shader_source.txt", "f_shader_source.txt"}},
-			{m_instance_shader, {"v_instance_shader.txt", "f_shader_source.txt"}},
-			{m_light_shader, {"v_light_shader_source.txt", "f_light_shader_source.txt"}},
-			{m_skybox_shader, {"v_cube_map_shader_source.txt", "f_cube_map_shader_source.txt"}},
-			{m_blur_shader, {"v_hdr_shader.txt", "f_blur_shader.txt"}},
-			{m_hdr_shader, {"v_hdr_shader.txt", "f_hdr_shader.txt"}},
-			{m_particle_shader, {"v_particle_shader.txt", "f_particle_shader.txt"}},
-			{m_outline_shader, {"v_outline_shader.txt", "f_outline_shader.txt"}},
-			{m_texture_shader, {"v_hdr_shader.txt", "f_texture_shader.txt"}}
+			{m_shader, {"shaders/vertex/v_shader.txt", "shaders/fragment/f_shader.txt"}},
+			{m_instance_shader, {"shaders/vertex/v_instance_shader.txt", "shaders/fragment/f_shader.txt"}},
+			{m_light_shader, {"shaders/vertex/v_light_shader.txt", "shaders/fragment/f_light_shader.txt"}},
+			{m_skybox_shader, {"shaders/vertex/v_cube_map_shader.txt", "shaders/fragment/f_cube_map_shader.txt"}},
+			{m_blur_shader, {"shaders/vertex/v_hdr_shader.txt", "shaders/fragment/f_blur_shader.txt"}},
+			{m_hdr_shader, {"shaders/vertex/v_hdr_shader.txt", "shaders/fragment/f_hdr_shader.txt"}},
+			{m_particle_shader, {"shaders/vertex/v_particle_shader.txt", "shaders/fragment/f_particle_shader.txt"}},
+			{m_outline_shader, {"shaders/vertex/v_outline_shader.txt", "shaders/fragment/f_outline_shader.txt"}},
+			{m_texture_shader, {"shaders/vertex/v_hdr_shader.txt", "shaders/fragment/f_texture_shader.txt"}}
 		};
 
 		for (const auto& shader_entry : shader_map)
@@ -281,35 +309,8 @@ public:
 		srand(time(0)); //Update seed of random number generator based on current time.
 
 		//-------------------- Asteroids
-		float radius = 125.0;
-		float offset = 15.f;
-		for (int i = 0; i < asteroid_amount; i++)
-		{
-			glm::mat4 model = glm::mat4(1.0f);
-
-			//Random Translation
-			float angle = (float)(i) / (float)(asteroid_amount) * 360.f;
-
-			float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-			float x = cos(angle) * radius + displacement;
-			displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-			float z = sin(angle) * radius + displacement;
-			displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-			float y = displacement * 0.1f;
-			
-			model = glm::translate(model, glm::vec3(x, y, z));
-
-			//Random Scale
-			float scale = (rand() % 6) / 10.f + 0.5f;
-			model = glm::scale(model, glm::vec3(scale));
-
-			//Random Rotation
-			float rotation_angle = (rand() % 361);
-			model = glm::rotate(model, rotation_angle, glm::vec3(0.f, 1.f, 0.f));
-
-			asteroidMatrices.push_back(model);
-		}
-		m_asteroid = new Model("models/asteroid/asteroid.obj", asteroidMatrices);
+		m_asteroid_belt1 = new Model("models/asteroid/asteroid.obj", generateAsteroidMatrices(500, 15.f, 125.f));
+		m_asteroid_belt2 = new Model("models/asteroid/asteroid.obj", generateAsteroidMatrices(500, 35.f, 200.f));
 		
 		//-------------------- Solar System
 		glm::vec3 axis;
@@ -350,14 +351,14 @@ public:
 		m_skybox = new CubeMap();
 		std::vector<std::string> sky_box_faces = 
 		{ 
-			"skybox/right.png",
-			"skybox/left.png",
-			"skybox/top.png",
-			"skybox/bottom.png",
-			"skybox/front.png",
-			"skybox/back.png"
+			"textures/skybox/right.png",
+			"textures/skybox/left.png",
+			"textures/skybox/top.png",
+			"textures/skybox/bottom.png",
+			"textures/skybox/front.png",
+			"textures/skybox/back.png"
 		};
-		m_skybox->Initialize("skybox.txt", sky_box_faces);
+		m_skybox->Initialize("models/skybox.txt", sky_box_faces);
 		//--------------------
 
 		//Initialize Models
@@ -527,22 +528,13 @@ public:
 		glUniform1f(m_instance_shader->GetUniformLocation("material.shininess"), 45.f);
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_instance_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		m_asteroid->Render(*m_instance_shader);
+		m_asteroid_belt1->Render(*m_instance_shader);
+		m_asteroid_belt2->Render(*m_instance_shader);
 
 		//-------------------- Render Lights
 		m_light_shader->Enable();
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
-		/*
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_dir_light->getModel()));
-		m_dir_light->Render(*m_light_shader);
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light0->getModel()));
-		m_point_light0->Render(*m_light_shader);
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light1->getModel()));
-		m_point_light1->Render(*m_light_shader);
-		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light2->getModel()));
-		m_point_light2->Render(*m_light_shader);
-		*/
 		glUniformMatrix4fv(m_light_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_point_light3->getModel()));
 		m_point_light3->Render(*m_light_shader);
 
@@ -703,18 +695,30 @@ public:
 	{
 		if (can_visit && !visiting)
 		{
-			visiting = true;
+			m_camera->setMouseRot(screen_width / 2, screen_height/ 2);
+			zoom_distance = 0;
 			temp_camera_pos = m_camera->getPosition();
 			temp_camera_rot = m_camera->getRotation();
+			visiting = true;
 			//std::cout << "Entered the planet: " << closest_planet.first << std::endl;
 		}
 		else if (visiting)
 		{
-			visiting = false;
 			m_camera->setPosition(temp_camera_pos);
 			m_camera->setRotation(temp_camera_rot);
+			visiting = false;
 			//std::cout << "Leaving the planet: " << closest_planet.first << std::endl;
 		}
+	}
+
+	void setZoomDistance(float zoom)
+	{
+		zoom_distance = zoom;
+	}
+
+	void setExtraCameraSpeed(float speed)
+	{
+		m_camera->setExtraSpeed(speed);
 	}
 
 	void MoveCameraForward(double dt)
@@ -746,9 +750,9 @@ public:
 	{
 		mouse_pitch += m_camera->getMouseRot().first * delta_time;
 		mouse_yaw += m_camera->getMouseRot().second * delta_time;
-		mouse_pitch = glm::clamp(mouse_pitch, -glm::radians(60.0f), glm::radians(60.0f));
+		mouse_yaw = glm::clamp(mouse_yaw, -glm::radians(60.0f), glm::radians(60.0f));
 
-		glm::vec3 view_dir = glm::vec3(dist * -cos(mouse_pitch) * sin(mouse_yaw), dist * sin(mouse_pitch), dist * cos(mouse_pitch) * cos(mouse_yaw));
+		glm::vec3 view_dir = glm::vec3(dist * -cos(mouse_yaw) * sin(mouse_pitch), dist * sin(mouse_yaw), dist * cos(mouse_yaw) * cos(mouse_pitch));
 		glm::vec3 current_visit_pos = model->getPosition() + view_dir;
 
 		m_camera->setPosition(current_visit_pos);
@@ -783,19 +787,19 @@ public:
 			glm::mat4 player_roll = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
 			glm::mat4 player_pitch = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
 			glm::mat4 player_scale = glm::scale(glm::vec3(.03f, .03f, .03f));
-			player_mat = glm::inverse((player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()));
-			m_player_ship->Update(player_mat * player_scale);
+			player_mat = glm::inverse(player_rotation * player_roll * player_pitch * player_translation * m_camera->GetView()) * player_scale;
+			m_player_ship->Update(player_mat);
 		}
 		else
 		{
-			if (closest_planet.first == "sun") { viewPlanet(m_sun, 65.f, dt); }
-			else if (closest_planet.first == "earth") { viewPlanet(m_earth, 25.f, dt); }
-			else if (closest_planet.first == "moon") { viewPlanet(m_moon, 8.f, dt); }
+			if (closest_planet.first == "sun") { viewPlanet(m_sun, 65.f + zoom_distance, dt); }
+			else if (closest_planet.first == "earth") { viewPlanet(m_earth, 25.f + zoom_distance, dt); }
+			else if (closest_planet.first == "moon") { viewPlanet(m_moon, 8.f + zoom_distance, dt); }
 		}
 
 		//Player Particles
-		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(.43f, -.05f, -.7f));
-		glm::mat4 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-.43f, -.05f, -.7f));
+		glm::mat4 particle_engine_origin1 = glm::translate(player_mat, glm::vec3(14.3f, -1.6f, -23.3f));
+		glm::mat4 particle_engine_origin2 = glm::translate(player_mat, glm::vec3(-14.3f, -1.6f, -23.3f));
 		glm::vec3 particle_engine_velocity = glm::normalize(glm::vec3(player_mat * glm::vec4(0.f, 0.f, -1.f, 0.f)));
 
 		m_engine_particle1->emitParticles(dt, particle_engine_origin1[3], particle_engine_velocity);
