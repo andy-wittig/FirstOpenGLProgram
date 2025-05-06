@@ -122,6 +122,7 @@ private:
 	//Scene Models
 	Model* m_spaceship;
 	Model* m_player_ship;
+	Model* m_comet;
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
@@ -141,15 +142,12 @@ private:
 	Emitter* m_engine_particle2;
 	Emitter* m_sun_particle;
 	Emitter* m_ship_particle;
+	Emitter* m_comet_particle;
 
 	//Transformations
 	glm::mat4 player_tmat;
 	glm::mat4 player_rmat;
 	glm::mat4 player_smat;
-
-	glm::mat4 spaceship_tmat;
-	glm::mat4 spaceship_rmat;
-	glm::mat4 spaceship_smat;
 
 	glm::mat4 tmat;
 	glm::mat4 rmat;
@@ -330,9 +328,15 @@ public:
 		t_offset = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, 0.f));
 		r_offset = glm::rotate(glm::mat4(1.0f), glm::radians(angle), axis);
 
+		//Initialize Models
+		m_spaceship = new Model("models/carrier/carrier.obj");
+		m_player_ship = new Model("models/starship/starship.obj");
+
 		m_sun = new Model("models/Sun/Sun.obj");
 		m_earth = new Model("models/Earth/Earth.obj");
 		m_moon = new Model("models/Moon/Moon.obj");
+
+		m_comet = new Model("models/comet/comet.obj");
 
 		//-------------------- Lights
 		m_point_light0 = new Model("models/lightbulb/lightbulb.obj");
@@ -358,13 +362,6 @@ public:
 		m_skybox->Initialize("models/skybox.txt", sky_box_faces);
 		//--------------------
 
-		//Initialize Models
-		m_spaceship = new Model("models/carrier/carrier.obj");
-		m_player_ship = new Model("models/starship/starship.obj");
-
-		m_console_texture = new Texture();
-		m_console_texture->Initialize("textures/spaceship_cockpit.png");
-
 		//Initialize Particles
 		m_engine_particle1 = new Emitter();
 		m_engine_particle1->Initialize("textures/smoke.png", 20, 1, 20, .02f, 1.f);
@@ -373,7 +370,15 @@ public:
 		m_sun_particle = new Emitter();
 		m_sun_particle->Initialize("textures/flame.png", 50, 1, 10, 30.f, .8f);
 		m_ship_particle = new Emitter();
-		m_ship_particle->Initialize("textures/smoke.png", 40, 1, 10, .1f, 3.f);
+		m_ship_particle->Initialize("textures/smoke.png", 100, 1, 15, .2f, 1.f);
+		m_ship_particle->useWorldSpace();
+		m_comet_particle = new Emitter();
+		m_comet_particle->Initialize("textures/flame.png", 100, 1, 30, .5f, 3.f);
+		m_comet_particle->useWorldSpace();
+
+		//Onscreen Textures
+		m_console_texture = new Texture();
+		m_console_texture->Initialize("textures/spaceship_cockpit.png");
 
 		//OpenGL Global Settings
 		glEnable(GL_DEPTH_TEST);
@@ -482,35 +487,41 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("viewMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
 
 		//Ships
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 50.f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_spaceship->getModel()));
 		m_spaceship->Render(*m_shader);
 
 		if (!visiting)
 		{
-			glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.0f);
+			glUniform1f(m_shader->GetUniformLocation("material.shininess"), 20.f);
 			glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_player_ship->getModel()));
 			m_player_ship->Render(*m_shader);
 		}
 
 		//Planets
 		glUniform1f(m_shader->GetUniformLocation("emissive"), true);
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 30.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 30.f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_sun->getModel()));
 		m_sun->Render(*m_shader);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_earth->getModel()));
 		m_earth->Render(*m_shader);
 		glUniform1f(m_shader->GetUniformLocation("emissive"), false);
 
-		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.0f);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
 		m_moon->Render(*m_shader);
 
+		glUniform1f(m_shader->GetUniformLocation("emissive"), true);
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 45.f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_comet->getModel()));
+		m_comet->Render(*m_shader);
+		glUniform1f(m_shader->GetUniformLocation("emissive"), false);
+
 		glStencilMask(0x00);
 
-		// Instancing
+		//Instancing
 		glUniform1i(m_shader->GetUniformLocation("use_instancing"), true);
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 45.f);
 		m_asteroid_belt1->Render(*m_shader);
@@ -549,8 +560,11 @@ public:
 		glUniform1f(m_particle_shader->GetUniformLocation("scale"), 1.5f);
 		m_sun_particle->Render(*m_particle_shader);
 
-		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .5f);
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .75f);
 		m_ship_particle->Render(*m_particle_shader);
+
+		glUniform1f(m_particle_shader->GetUniformLocation("scale"), .8f);
+		m_comet_particle->Render(*m_particle_shader);
 
 		//Screen Textures
 		if (visiting)
@@ -799,19 +813,21 @@ public:
 		m_point_light1->Update(particle_engine_origin1 * glm::scale(glm::vec3(.03f, .03f, .03f)));
 		m_point_light2->Update(particle_engine_origin2 * glm::scale(glm::vec3(.03f, .03f, .03f)));
 
-		//--------------------Spaceship transform
+		//--------------------Orbital Transforms
 		double elapsed_time = glfwGetTime();
-		float speed = 0.05f;
-		float dist = 125.f;
-
 		glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
-		glm::vec3 direction = glm::vec3(cos(speed * elapsed_time) * dist, 5.f, sin(speed * elapsed_time) * dist);
+		
+		//Spaceship
+		float spaceship_radius = 125.f;
+		float spaceship_speed = 0.05f;
+
+		glm::vec3 direction = glm::vec3(cos(spaceship_speed * elapsed_time) * spaceship_radius, 5.f, sin(spaceship_speed * elapsed_time) * spaceship_radius);
 		glm::vec3 tangent = glm::normalize(glm::cross(direction, up));
 		float angle = glm::atan2(tangent.x, tangent.z);
 
-		spaceship_tmat = glm::translate(glm::mat4(1.f), direction);
-		spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
-		spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
+		glm::mat4 spaceship_tmat = glm::translate(glm::mat4(1.f), direction);
+		glm::mat4 spaceship_rmat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
+		glm::mat4 spaceship_smat = glm::scale(glm::vec3(.25f, .25f, .25f));
 		m_spaceship->Update(spaceship_tmat * spaceship_rmat * spaceship_smat);
 
 		//Ship Particles
@@ -820,9 +836,20 @@ public:
 		m_ship_particle->emitParticles(dt, particle_ship_origin[3], particle_ship_velocity);
 
 		//Ship Lights
-		glm::vec3 light_direction = glm::vec3(cos(speed * elapsed_time - .04f) * dist, 5.f, sin(speed * elapsed_time - .04f) * dist); //Light trails behind spaceship
+		glm::vec3 light_direction = glm::vec3(cos(spaceship_speed * elapsed_time - .04f) * spaceship_radius, 5.f, sin(spaceship_speed * elapsed_time - .04f) * spaceship_radius); //Light trails behind spaceship
 		glm::mat4 light0_tmat = glm::translate(glm::mat4(1.f), light_direction);
 		m_point_light0->Update(light0_tmat);
+
+		//Comet
+		float comet_radius = 85.f;
+		float comet_speed = .1f;
+		float comet_particle_speed = 5.f;
+
+		glm::vec3 comet_direction = glm::vec3(0.f, cos(comet_speed * elapsed_time) * comet_radius, sin(comet_speed * elapsed_time) * comet_radius * 2);
+		glm::mat4 comet_tmat = glm::translate(glm::mat4(1.f), comet_direction);
+		m_comet->Update(comet_tmat);
+
+		m_comet_particle->emitParticles(dt, m_comet->getPosition(), glm::vec3(0.f));
 
 		//--------------------Solar System transform
 		//sun transform

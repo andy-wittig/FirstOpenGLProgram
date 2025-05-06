@@ -33,7 +33,12 @@ private:
 	glm::vec3 particle_velocity;
 	glm::vec3 prev_origin;
 
+	bool local_space = true;
+
 public:
+	void useWorldSpace() { local_space = false; }
+	void useLocalSpace() { local_space = true; }
+
 	void Initialize(const char* texture_path, unsigned int total_spawned, unsigned int spawn_amount, unsigned int rate, float range, float life)
 	{
 		this->texture_path = texture_path;
@@ -131,7 +136,7 @@ public:
 			if (part.life > 0.f)
 			{
 				//part.position -= part.velocity * dt;
-				part.position += object_movement;
+				if (local_space) { part.position += object_movement; }
 				part.position += part.velocity * dt;
 				part.color.a = part.life / particle_life;
 			}
