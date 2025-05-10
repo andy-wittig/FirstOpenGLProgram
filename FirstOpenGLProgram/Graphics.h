@@ -126,6 +126,8 @@ private:
 	Model* m_sun;
 	Model* m_earth;
 	Model* m_moon;
+	Model* m_jupiter;
+	Model* m_j_moon;
 
 	//Asteroid Instance Variables
 	Model* m_asteroid_belt1;
@@ -335,7 +337,8 @@ public:
 		m_sun = new Model("models/Sun/Sun.obj");
 		m_earth = new Model("models/Earth/Earth.obj");
 		m_moon = new Model("models/Moon/Moon.obj");
-
+		m_jupiter = new Model("models/jupiter/jupiter.obj");
+		m_j_moon = new Model("models/Moon/Moon.obj");
 		m_comet = new Model("models/comet/comet.obj");
 
 		//-------------------- Lights
@@ -513,6 +516,14 @@ public:
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_moon->getModel()));
 		m_moon->Render(*m_shader);
 
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 5.f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_jupiter->getModel()));
+		m_jupiter->Render(*m_shader);
+
+		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 15.f);
+		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_j_moon->getModel()));
+		m_j_moon->Render(*m_shader);
+
 		glUniform1f(m_shader->GetUniformLocation("emissive"), true);
 		glUniform1f(m_shader->GetUniformLocation("material.shininess"), 45.f);
 		glUniformMatrix4fv(m_shader->GetUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_comet->getModel()));
@@ -543,6 +554,8 @@ public:
 			if (closest_planet.first == "sun") { drawOutline(m_sun); }
 			else if (closest_planet.first == "earth") { drawOutline(m_earth); }
 			else if (closest_planet.first == "moon") { drawOutline(m_moon); }
+			else if (closest_planet.first == "jupiter") { drawOutline(m_jupiter); }
+			else if (closest_planet.first == "j_moon") { drawOutline(m_j_moon); }
 		}
 
 		//-------------------- Render Particles
@@ -796,6 +809,8 @@ public:
 			if (closest_planet.first == "sun") { viewPlanet(m_sun, 65.f + zoom_distance, dt); }
 			else if (closest_planet.first == "earth") { viewPlanet(m_earth, 25.f + zoom_distance, dt); }
 			else if (closest_planet.first == "moon") { viewPlanet(m_moon, 8.f + zoom_distance, dt); }
+			else if (closest_planet.first == "jupiter") { viewPlanet(m_jupiter, 35.f + zoom_distance, dt); }
+			else if (closest_planet.first == "j_moon") { viewPlanet(m_j_moon, 8.f + zoom_distance, dt); }
 		}
 
 		//Player Particles
@@ -854,18 +869,27 @@ public:
 		//--------------------Solar System transform
 		//sun transform
 		computeTransforms(dt, { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f }, { 0.05f, 0.0f, 0.05f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		planet_stack.push(std::make_pair("sun", t_offset * r_offset * tmat * rmat * smat));
+		planet_stack.push(std::make_pair("sun", tmat * rmat * smat));
 
 		m_sun_particle->emitParticles(dt, glm::vec3(0.f), glm::vec3(0.f));
 
+		//jupiter transform
+		computeTransforms(dt, { 0.06f, 0.f, 0.06f }, { 82.f, 0.f, 82.f }, { 0.03f, 0.0f, 0.03f }, { 8.f, 8.f, 8.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
+		std::pair<std::string, glm::mat4> juptier_transform = std::make_pair("jupiter", planet_stack.top().second * tmat * rmat * smat);
+
 		//earth transform
 		computeTransforms(dt, { 0.10f, 0.0f, 0.10f }, { 40.f, 0.0f, 40.0f }, { 0.15f, 0.0f, 0.15f }, { 2.f, 2.f, 2.f }, glm::vec3(0.0f, 1.0f, 0.0f), tmat, rmat, smat);
-		tmat *= glm::translate(glm::mat4(1.f), glm::vec3(0.f, 1.f, 0.f)); //adjust cube's offset
 		planet_stack.push(std::make_pair("earth", planet_stack.top().second * tmat * rmat * smat));
 
 		//moon transform
 		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 5.f, 5.f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .5f, .5f, .5f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
 		planet_stack.push(std::make_pair("moon", planet_stack.top().second * tmat * rmat * smat));
+
+		planet_stack.push(juptier_transform);
+
+		//jupiter moon transform
+		computeTransforms(dt, { 0.1f, 0.1f, 0.f }, { 1.5f, 1.5f, 0.f }, { 0.15f, 0.0f, 0.15f }, { .1f, .1f, .1f }, glm::vec3(0.f, 1.f, 0.f), tmat, rmat, smat);
+		planet_stack.push(std::make_pair("j_moon", planet_stack.top().second * tmat * rmat * smat));
 
 		if (!visiting) //Find closest planet
 		{
@@ -886,6 +910,10 @@ public:
 		}
 
 		//Stack Updates
+		m_j_moon->Update(planet_stack.top().second);
+		planet_stack.pop();
+		m_jupiter->Update(planet_stack.top().second);
+		planet_stack.pop();
 		m_moon->Update(planet_stack.top().second);
 		planet_stack.pop();
 		m_earth->Update(planet_stack.top().second);

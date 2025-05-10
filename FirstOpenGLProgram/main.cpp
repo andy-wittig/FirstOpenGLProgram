@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-	Engine* engine = new Engine("OpenGL Cube Renderer", 800, 600);
+	Engine* engine = new Engine("OpenGL Solar System", 800, 600);
 
 	if (!engine->Initialize())
 	{
